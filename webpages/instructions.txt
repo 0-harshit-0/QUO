@@ -1,0 +1,1 @@
+Add/Delete webpage folders here. Only folders will be read.
