@@ -49,21 +49,30 @@ func (t *Tab) run() {
                         //     continue
                         // }
                         if cmd.PageId < 0 || cmd.PageId > len(Sites) {
-                            fmt.Println("\nFolder not found\n")
+                            log.Println("\nFolder not found")
+                            cmd.Completed <- true
                             continue
                         }
 
                         // shutting down the old host
                         CloseHost(t)
 
-                        if t.serving {
-                            fmt.Printf("Already serving at port: %d\n", t.port)
+                        if t.serving {//just a fail safe
+                            log.Printf("Already serving at port: %d\n", t.port)
+                            cmd.Completed <- true
                             continue
                         }
 
-                        t.server = Host(Sites[cmd.PageId].Path, Sites[cmd.PageId].Name, t.port, cmd.Completed)
+                        srv, err := Host(Sites[cmd.PageId].Path, Sites[cmd.PageId].Name, t.port)
+                        if err != nil {
+                            log.Print("Error: ", err)
+                            cmd.Completed <- true
+                            continue
+                        }
                         // <- cmd.Completed
+                        t.server = srv
                         t.serving = true
+                        cmd.Completed <- true
                 }
                 
             case <-Shutdown:
@@ -109,7 +118,7 @@ func SwitchTab(id int, noLog bool) {
             fmt.Printf("Switched to %d", CurrentTabID)
         }
     } else {
-        fmt.Println("Tab does not exist")
+        log.Println("Tab does not exist")
     }
 }
 
@@ -138,12 +147,12 @@ func CloseTab(id int) {
             break
         }
     } else {
-        fmt.Println("No tab to close or something went wrong")
+        log.Println("No tab to close or something went wrong")
     }
 }
 
 func CloseHost(t *Tab) {
-    if t.server != nil {
+    if t.serving == true {
         ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
         err := t.server.Shutdown(ctx);

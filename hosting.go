@@ -1,6 +1,7 @@
 package main
 
 import (
+    "os"
     "fmt"
     "log"
     "net"
@@ -8,7 +9,15 @@ import (
 )
 
 
-func Host(path string, name string, port uint16, completed chan bool) *http.Server {
+func Host(path string, name string, port uint16) (*http.Server, error) {
+    info, err := os.Stat(path)
+    if err != nil {
+        return nil, err
+    }
+    if !info.IsDir() {
+        return nil, fmt.Errorf("path is not a directory: %s", path)
+    }
+
 	mux := http.NewServeMux()
     mux.Handle("/", http.FileServer(http.Dir(path)))
 
@@ -21,8 +30,7 @@ func Host(path string, name string, port uint16, completed chan bool) *http.Serv
 
     ln, err := net.Listen("tcp", addr)
     if err != nil {
-        completed <- true
-        return nil
+        return nil, err
     }
 
 	fmt.Printf("Serving %s at http://localhost%s\n", name, addr)
@@ -34,6 +42,5 @@ func Host(path string, name string, port uint16, completed chan bool) *http.Serv
         }
     }()
 
-    completed <- true
-    return srv
+    return srv, nil
 }

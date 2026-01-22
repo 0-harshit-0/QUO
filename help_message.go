@@ -95,7 +95,8 @@ func HelpMenu() {
                 //     continue
                 // }
 
-                fmt.Println("Available Pages: ")
+                fmt.Println("Last Visited: ")
+                ReadWebpagesHistory()
                 for key, site := range Sites {
                     fmt.Printf(
                         "%d - %s | Last Updated: %s\n",

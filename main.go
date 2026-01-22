@@ -8,11 +8,12 @@ import (
 
 
 var Shutdown = make(chan struct{})
+var CacheDir string = "cache"
 
 
 
 func BrowserState() {
-    fmt.Printf("Cuurent Tab: %d | Total tabs: %d\n", CurrentTabID, len(Tabs))
+    fmt.Printf("Current Tab: %d | Total tabs: %d\n", CurrentTabID, len(Tabs))
 }
 func QuitBrowser() {
     close(Shutdown)
@@ -36,7 +37,7 @@ func main() {
     
     done := make(chan struct{})
     go func() {
-        ReadWebpagesFolder()
+        // ReadWebpagesFolder(0, 10)
         HelpMenu()
         close(done)
     }()
