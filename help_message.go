@@ -1,19 +1,24 @@
 package main
 
 import (
+    "os"
+    "bufio"
     "fmt"
+    "strings"
+    "strconv"
 )
 
 
-func SInput() (string) {
-    var input string
-    _, err := fmt.Scanln(&input)
+var reader = bufio.NewReader(os.Stdin)
+
+func SInput() string {
+    line, err := reader.ReadString('\n')
     if err != nil {
         fmt.Println("Error reading input:", err)
-        return ""
     }
-    return input
+    return strings.TrimSpace(line)
 }
+
 func NInput() (int) {
     var input int
     _, err := fmt.Scanln(&input)
@@ -89,6 +94,7 @@ func HelpMenu() {
             case 5:
                 CloseTab(CurrentTabID)
             case 6:
+                ReadWebpagesHistory()
                 currentTab := Tabs[CurrentTabID]
                 // if currentTab.serving {
                 //     fmt.Printf("Already serving at port: %d\n", currentTab.port)
@@ -96,34 +102,65 @@ func HelpMenu() {
                 // }
 
                 fmt.Println("Last Visited: ")
-                ReadWebpagesHistory()
                 for key, site := range Sites {
                     fmt.Printf(
                         "%d - %s | Last Updated: %s\n",
-                        key,
+                        key+1,
                         site.Name,
                         site.UpdatedAt.Format("2006-01-02 15:04:05"),
                     )
                 }
 
-                fmt.Print("\nSearch query: ")
-                searchId := NInput()
-                _, ok := Sites[searchId]
-                if !ok {
-                    fmt.Println("Invalid Search Suery")
-                    continue
+                searchIndex := 1
+
+                for {
+                    fmt.Print("\nSearch query: ")
+                    searchQuery := strings.TrimSpace(SInput())
+                    parts := strings.Fields(searchQuery)
+
+                    if len(parts) == 0 {
+                        continue
+                    }
+
+                    if strings.HasPrefix(parts[0], "-y") {
+                        if len(parts) > 1 {
+                            n, err := strconv.Atoi(parts[1])
+                            if err != nil {
+                                fmt.Println("invalid number")
+                                continue
+                            }
+
+                            searchIndex = n
+                        }
+                        break
+                    }else if strings.HasPrefix(parts[0], "-n") {
+                        searchIndex = 0
+                        break
+                    }
+
+                    ReadWebpagesFolder(searchQuery)
+                    for key, site := range Sites {
+                        fmt.Printf(
+                            "%d - %s | Last Updated: %s\n",
+                            key,
+                            site.Name,
+                            site.UpdatedAt.Format("2006-01-02 15:04:05"),
+                        )
+                    }
                 }
 
-                completed := make(chan bool)
+                if searchIndex != 0 {
+                    completed := make(chan bool)
 
-                // send the query to tab channel
-                currentTab.command <- Command {
-                    Action: "start_server",
-                    PageId:  searchId,
-                    Completed: completed,
+                    // send the query to tab channel
+                    currentTab.command <- Command {
+                        Action: "start_server",
+                        PageIndex:  searchIndex-1,
+                        Completed: completed,
+                    }
+
+                    <- completed
                 }
-
-                <- completed
             case 7:
                 currentTab := Tabs[CurrentTabID]
                 CloseHost(currentTab)

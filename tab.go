@@ -12,7 +12,7 @@ import (
 
 type Command struct {
     Action string
-    PageId  int
+    PageIndex  int
     Completed chan bool // flag to know when the command is ended
 }
 type Tab struct {
@@ -48,7 +48,7 @@ func (t *Tab) run() {
                         //     fmt.Println("\nInvalid folder id\n")
                         //     continue
                         // }
-                        if cmd.PageId < 0 || cmd.PageId > len(Sites) {
+                        if cmd.PageIndex < 0 || cmd.PageIndex > len(Sites) {
                             log.Println("\nFolder not found")
                             cmd.Completed <- true
                             continue
@@ -63,7 +63,7 @@ func (t *Tab) run() {
                             continue
                         }
 
-                        srv, err := Host(Sites[cmd.PageId].Path, Sites[cmd.PageId].Name, t.port)
+                        srv, err := Host(Sites[cmd.PageIndex].Path, Sites[cmd.PageIndex].Name, t.port)
                         if err != nil {
                             log.Print("Error: ", err)
                             cmd.Completed <- true
@@ -72,6 +72,12 @@ func (t *Tab) run() {
                         // <- cmd.Completed
                         t.server = srv
                         t.serving = true
+
+                        err = UpdateHistory(Sites[cmd.PageIndex].Name)
+                        if err != nil {
+                            log.Fatal(err)
+                        }
+
                         cmd.Completed <- true
                 }
                 

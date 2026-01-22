@@ -9,6 +9,7 @@ import (
 
 var Shutdown = make(chan struct{})
 var CacheDir string = "cache"
+var RootWebpagesFolder string = "webpages" // root webpages folder
 
 
 
