@@ -41,7 +41,7 @@ func ReadJson[T any](path string) (T, error) {
 }
 
 
-// save and load folder_name, and then use that names to load them in Sites using the ReactWebpagesFolder
+// save and load folder_name, and then use that names to load them in Sites
 func ReadWebpagesHistory() {
     // Define a slice to hold the data
     history, err := ReadJson[[]string](CacheDir+"/history.json")
