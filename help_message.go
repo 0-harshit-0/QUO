@@ -40,6 +40,9 @@ func HelpMenu() {
         5: "Close current tab",
         6: "Search",
         7: "Close Host",
+        8: "",
+        9: "Sync Webpages",
+        10: "Allow Sync",
     }
     rows := 3
     cols := (len(msgs) + rows - 1) / rows
@@ -48,7 +51,11 @@ func HelpMenu() {
         for c := 0; c < cols; c++ {
             i := c*rows + r
             if i < len(msgs) {
-                fmt.Printf("%-25s", fmt.Sprintf("%d - %s", i, msgs[i]))
+                if len(msgs[i]) == 0 {
+                    fmt.Printf("%-25s", fmt.Sprintf(""))
+                } else {
+                    fmt.Printf("%-25s", fmt.Sprintf("%d - %s", i, msgs[i]))
+                }
             }
         }
         fmt.Println()
@@ -164,6 +171,9 @@ func HelpMenu() {
             case 7:
                 currentTab := Tabs[CurrentTabID]
                 CloseHost(currentTab)
+            case 9:
+                fmt.Println("Syncing...")
+                StartBeacon()
             default:
                 fmt.Println("Unknown command")
         }
