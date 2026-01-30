@@ -11,14 +11,14 @@ import (
 )
 
 
-type SiteFolder struct {
+type WebpageFolder struct {
     ID        int
     Name      string
     Path      string
     UpdatedAt time.Time
 }
 
-var Sites []*SiteFolder
+var Webpages []*WebpageFolder
 
 
 
@@ -41,7 +41,7 @@ func ReadJson[T any](path string) (T, error) {
 }
 
 
-// save and load folder_name, and then use that names to load them in Sites
+// save and load folder_name, and then use that names to load them in Webpages
 func ReadWebpagesHistory() {
     // Define a slice to hold the data
     history, err := ReadJson[[]string](CacheDir+"/history.json")
@@ -50,11 +50,11 @@ func ReadWebpagesHistory() {
     }
 
     id := 1
-    Sites = nil
+    Webpages = nil
     for _, entry := range history {
         path := filepath.Join(RootWebpagesFolder, entry)
         // fmt.Println(entry, path)
-        Sites = append(Sites, &SiteFolder{
+        Webpages = append(Webpages, &WebpageFolder{
             ID:        id,
             Name:      entry,
             Path:      path,
@@ -73,7 +73,7 @@ func ReadWebpagesFolder(search string) {
     }
 
 
-    Sites = nil
+    Webpages = nil
     id := 1
     for _, entry := range entries {
         if entry.IsDir() {
@@ -89,7 +89,7 @@ func ReadWebpagesFolder(search string) {
                 continue
             }
 
-            Sites = append(Sites, &SiteFolder{
+            Webpages = append(Webpages, &WebpageFolder{
                 ID:        id,
                 Name:      entry.Name(),
                 Path:      path,
@@ -97,7 +97,7 @@ func ReadWebpagesFolder(search string) {
             })
             id++
 
-            if len(Sites) > 9 {
+            if len(Webpages) > 9 {
                 break
             }
         }

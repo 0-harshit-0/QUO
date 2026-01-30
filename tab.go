@@ -48,7 +48,7 @@ func (t *Tab) run() {
                         //     fmt.Println("\nInvalid folder id\n")
                         //     continue
                         // }
-                        if cmd.PageIndex < 0 || cmd.PageIndex > len(Sites) {
+                        if cmd.PageIndex < 0 || cmd.PageIndex > len(Webpages) {
                             log.Println("\nFolder not found")
                             cmd.Completed <- true
                             continue
@@ -63,7 +63,7 @@ func (t *Tab) run() {
                             continue
                         }
 
-                        srv, err := Host(Sites[cmd.PageIndex].Path, Sites[cmd.PageIndex].Name, t.port)
+                        srv, err := Host(Webpages[cmd.PageIndex].Path, Webpages[cmd.PageIndex].Name, t.port)
                         if err != nil {
                             log.Print("Error: ", err)
                             cmd.Completed <- true
@@ -73,7 +73,7 @@ func (t *Tab) run() {
                         t.server = srv
                         t.serving = true
 
-                        err = UpdateHistory(Sites[cmd.PageIndex].Name)
+                        err = UpdateHistory(Webpages[cmd.PageIndex].Name)
                         if err != nil {
                             log.Fatal(err)
                         }

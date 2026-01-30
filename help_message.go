@@ -109,7 +109,7 @@ func HelpMenu() {
                 // }
 
                 fmt.Println("Last Visited: ")
-                for key, site := range Sites {
+                for key, site := range Webpages {
                     fmt.Printf(
                         "%d - %s | Last Updated: %s\n",
                         key+1,
@@ -146,7 +146,7 @@ func HelpMenu() {
                     }
 
                     ReadWebpagesFolder(searchQuery)
-                    for key, site := range Sites {
+                    for key, site := range Webpages {
                         fmt.Printf(
                             "%d - %s | Last Updated: %s\n",
                             key,
