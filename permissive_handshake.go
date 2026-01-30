@@ -57,10 +57,10 @@ func send(sock windows.Handle, msg string) {
 }
 
 
-sock := createUDPSocket()
 func StartHandshake() {
     fmt.Println("Syncing...")
 
+	sock := createUDPSocket()
 	send(sock, "1")
 }
 func SendNodes(receive string) {
@@ -73,11 +73,13 @@ func SendNodes(receive string) {
 
     addrs := make([]string, 0, len(nodes)) // lnegth: 0 | capacity: len(nodes)
     for _, n := range nodes {
-    	if n.CheckedCount < (max_checked_count/2):
+    	if n.CheckedCount < (max_checked_count/2) {
 			addrs = append(addrs, n.Addr)
+    	}
 	}
-	addrs.append(receive) // append the flag 0 or 1
+	addrs = append(addrs, receive)// append the flag 0 or 1
 
+	sock := createUDPSocket()
 	send(sock, strings.Join(addrs, ","))
 }
 func RecNodes() {
