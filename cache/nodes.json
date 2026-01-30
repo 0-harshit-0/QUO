@@ -1,0 +1,12 @@
+[
+	{
+		"addr": "1",
+		"checked_count": 1,
+		"type": "static"
+	},
+	{
+		"addr": "2",
+		"checked_count": 1,
+		"type": "custom"
+	}
+]

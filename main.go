@@ -22,6 +22,11 @@ func QuitBrowser() {
 }
 
 func main() {
+    // start a common winsock for the whole program
+    InitWinsock()
+    defer CleanupWinsock()
+    
+    // initial prints    
     asciiName := `
 ------------------------ __ _ _   _  ___ -------------------------
 ----------------------- / _* | | | |/ _ \ ------------------------

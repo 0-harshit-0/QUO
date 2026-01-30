@@ -172,8 +172,7 @@ func HelpMenu() {
                 currentTab := Tabs[CurrentTabID]
                 CloseHost(currentTab)
             case 9:
-                fmt.Println("Syncing...")
-                StartBeacon()
+                StartHandshake()
             default:
                 fmt.Println("Unknown command")
         }
