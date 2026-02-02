@@ -6,22 +6,25 @@ package main
 import (
 	"golang.org/x/sys/windows"
 	"fmt"
+	"net"
 	"strings"
 )
 
 
 type Node struct {
 	Addr         string `json:"addr"`
+	Port         int `json:"port"`
 	CheckedCount int    `json:"checked_count"`
 	Type         string `json:"type"`
 }
 
 var max_checked_count int = 6
-var wsa windows.WSAData
 
 
+// goes to the main thread
 func InitWinsock() {
 	// Initialize Winsock
+	var wsa windows.WSAData
 	err := windows.WSAStartup(uint32(0x202), &wsa)
 	if err != nil {
 		panic(err)
@@ -45,10 +48,20 @@ func createUDPSocket() windows.Handle {
 	return sock
 }
 
-func send(sock windows.Handle, msg string) {
+func send(sock windows.Handle, dst_port int, dst_addr string, msg string) {
+	ip := net.ParseIP(dst_addr)
+	if ip == nil {
+		panic("invalid IP address")
+	}
+
+	ip4 := ip.To4()
+	if ip4 == nil {
+		panic("not an IPv4 address")
+	}
+
 	addr := &windows.SockaddrInet4{
-		Port: 54321,
-		Addr: [4]byte{127, 0, 0, 1},
+		Port: dst_port,
+		Addr: [4]byte{ip4[0], ip4[1], ip4[2], ip4[3]},
 	}
 	err := windows.Sendto(sock, []byte(msg), 0, addr)
 	if err != nil {
@@ -57,12 +70,25 @@ func send(sock windows.Handle, msg string) {
 }
 
 
+var WinSocket windows.Handle = createUDPSocket()
+
 func StartHandshake() {
     fmt.Println("Syncing...")
 
-	sock := createUDPSocket()
-	send(sock, "1")
+    // ask all the nodes if they are live
+
+    nodes, err := ReadJson[[]Node](CacheDir+"/nodes.json")
+    if err != nil {
+        return
+    }
+
+    for _, n := range nodes {
+    	if n.CheckedCount < max_checked_count {
+			send(WinSocket, n.Port, n.Addr, "1")
+    	}
+	}
 }
+
 func SendNodes(receive string) {
     fmt.Println("Sending Nodes...")
 
@@ -79,9 +105,9 @@ func SendNodes(receive string) {
 	}
 	addrs = append(addrs, receive)// append the flag 0 or 1
 
-	sock := createUDPSocket()
-	send(sock, strings.Join(addrs, ","))
+	send(WinSocket, 54321, "127.0.0.1", strings.Join(addrs, ","))
 }
+
 func RecNodes() {
     fmt.Println("Receiving Nodes...")
 

@@ -15,6 +15,9 @@ A CLI Browser
 
 ## Concepts
 
+### Browser
+- 
+
 ### User Input
 - It is running in an individual Goroutine. (parent: main)
 
