@@ -9,7 +9,7 @@ import (
     // "fmt"
 )
 
-
+// each webpage has a hash: randomly 3 files, could be the same file, randomly 3 lines from each, along with the author name etc, and create a hash
 type WebpageFolder struct {
     ID        int
     Name      string

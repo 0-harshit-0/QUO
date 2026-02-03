@@ -19,6 +19,7 @@ type Node struct {
 }
 
 var max_checked_count int = 6
+var recv_port int = 54321
 
 
 // goes to the main thread
@@ -31,6 +32,7 @@ func InitWinsock() {
 	}
 }
 func CleanupWinsock() {
+	windows.Closesocket(WinSocket)
 	windows.WSACleanup()
 }
 
@@ -69,10 +71,46 @@ func send(sock windows.Handle, dst_port int, dst_addr string, msg string) {
 	}
 }
 
+func recv(sock windows.Handle) {
+	addr := &windows.SockaddrInet4{
+		Port: recv_port,
+		Addr: [4]byte{0, 0, 0, 0}, // INADDR_ANY
+	}
+
+    err = windows.Bind(sock, addr)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Print("Listening on UDP port %s\n", recv_port)
+
+	buf := make([]byte, 2048)
+
+	for {
+		n, from, err := windows.Recvfrom(sock, buf, 0)
+		if err != nil {
+			fmt.Println("recv error:", err)
+			continue
+		}
+
+		fromAddr := from.(*windows.SockaddrInet4)
+		fmt.Printf(
+			"Received %d bytes from %d.%d.%d.%d:%d: %s\n",
+			n,
+			fromAddr.Addr[0],
+			fromAddr.Addr[1],
+			fromAddr.Addr[2],
+			fromAddr.Addr[3],
+			fromAddr.Port,
+			string(buf[:n]),
+		)
+	}
+}
+
 
 var WinSocket windows.Handle = createUDPSocket()
 
-func StartHandshake() {
+func CheckActive() {
     fmt.Println("Syncing...")
 
     // ask all the nodes if they are live
@@ -87,6 +125,11 @@ func StartHandshake() {
 			send(WinSocket, n.Port, n.Addr, "1")
     	}
 	}
+}
+
+func RecNodes() {
+    fmt.Println("Receiving Nodes...")
+
 }
 
 func SendNodes(receive string) {
@@ -108,7 +151,3 @@ func SendNodes(receive string) {
 	send(WinSocket, 54321, "127.0.0.1", strings.Join(addrs, ","))
 }
 
-func RecNodes() {
-    fmt.Println("Receiving Nodes...")
-
-}

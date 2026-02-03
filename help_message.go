@@ -172,7 +172,7 @@ func HelpMenu() {
                 currentTab := Tabs[CurrentTabID]
                 CloseHost(currentTab)
             case 9:
-                StartHandshake()
+                CheckActive()
             default:
                 fmt.Println("Unknown command")
         }

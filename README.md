@@ -37,5 +37,5 @@ A CLI Browser
 ### Search
 - It is running in an individual Goroutine. (parent: main)
 
-### Permissive Handshake (synchronization & beacon)
+### Synchronization
 - It is running in an individual Goroutine. (parent: main)
