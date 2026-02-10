@@ -2,13 +2,15 @@ package main
 
 import (
     "fmt"
+    "strings"
     "reflect"
 )
 
 
 type settingsJson struct {
-    Discoverable         bool `json:"discoverable"`
     Receiver             bool `json:"receiver"`
+    Discoverable         bool `json:"discoverable"`
+    AllowSync            bool `json:"allow_sync"`
 }
 
 func ShowSettings() {
@@ -18,7 +20,17 @@ func ShowSettings() {
     }
 
     v := reflect.ValueOf(settings)
+    t := reflect.TypeOf(settings)
 
-    fmt.Print(v)
+    for i := 0; i < v.NumField(); i++ {
+        // key := t.Field(i).Tag.Get("json")
+        key := strings.ToLower(t.Field(i).Name)
+        value := v.Field(i).Interface()
+
+        fmt.Printf("%d - %s --- %v\n", i+1, key, value)
+    }
+
+    // fmt.Print(v)
+    // fmt.Print(t)
     // PrintInRows(3, settings)
 }
