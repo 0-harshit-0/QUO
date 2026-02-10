@@ -31,7 +31,7 @@ func NInput() (int) {
 }
 
 func HelpMenu() {
-    msgs := [...]string{
+    msgs := []string{
         0: "Quit the browser",
         1: "Browser state",
         2: "Browser commands",
@@ -42,24 +42,11 @@ func HelpMenu() {
         7: "Close Host",
         8: "",
         9: "Sync Webpages",
-        10: "Allow Sync",
+        10: "",
+        11: "",
+        "Settings",
     }
-    rows := 3
-    cols := (len(msgs) + rows - 1) / rows
-
-    for r := 0; r < rows; r++ {
-        for c := 0; c < cols; c++ {
-            i := c*rows + r
-            if i < len(msgs) {
-                if len(msgs[i]) == 0 {
-                    fmt.Printf("%-25s", fmt.Sprintf(""))
-                } else {
-                    fmt.Printf("%-25s", fmt.Sprintf("%d - %s", i, msgs[i]))
-                }
-            }
-        }
-        fmt.Println()
-    }
+    PrintInRows(6, msgs)
 
     for {
         // input
@@ -74,15 +61,7 @@ func HelpMenu() {
             case 1:
                 BrowserState()
             case 2:
-                for r := 0; r < rows; r++ {
-                    for c := 0; c < cols; c++ {
-                        i := c*rows + r
-                        if i < len(msgs) {
-                            fmt.Printf("%-25s", fmt.Sprintf("%d - %s", i, msgs[i]))
-                        }
-                    }
-                    fmt.Println()
-                }
+                PrintInRows(6, msgs)
             case 3:
                 NewTab(false)
             case 4:
@@ -118,10 +97,10 @@ func HelpMenu() {
                     )
                 }
 
-                searchIndex := 1
+                searchIndex := 1 // default to first webpage
 
                 for {
-                    fmt.Print("\nSearch query: ")
+                    fmt.Print("\nSearch query (use -y to open the page or -n to go back): ")
                     searchQuery := strings.TrimSpace(SInput())
                     parts := strings.Fields(searchQuery)
 
@@ -149,7 +128,7 @@ func HelpMenu() {
                     for key, site := range Webpages {
                         fmt.Printf(
                             "%d - %s | Last Updated: %s\n",
-                            key,
+                            key+1,
                             site.Name,
                             site.UpdatedAt.Format("2006-01-02 15:04:05"),
                         )
@@ -173,6 +152,8 @@ func HelpMenu() {
                 CloseHost(currentTab)
             case 9:
                 CheckActive()
+            case len(msgs)-1:
+                ShowSettings()
             default:
                 fmt.Println("Unknown command")
         }
