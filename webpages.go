@@ -10,14 +10,14 @@ import (
 )
 
 // each webpage has a hash: randomly 3 files, could be the same file, randomly 3 lines from each, along with the author name etc, and create a hash
-type WebpageFolder struct {
+type webpageFolder struct {
     ID        int
     Name      string
     Path      string
     UpdatedAt time.Time
 }
 
-var Webpages []*WebpageFolder
+var Webpages []*webpageFolder
 
 
 
@@ -34,7 +34,7 @@ func ReadWebpagesHistory() {
     for _, entry := range history {
         path := filepath.Join(RootWebpagesFolder, entry)
         // fmt.Println(entry, path)
-        Webpages = append(Webpages, &WebpageFolder{
+        Webpages = append(Webpages, &webpageFolder{
             ID:        id,
             Name:      entry,
             Path:      path,
@@ -69,7 +69,7 @@ func ReadWebpagesFolder(search string) {
                 continue
             }
 
-            Webpages = append(Webpages, &WebpageFolder{
+            Webpages = append(Webpages, &webpageFolder{
                 ID:        id,
                 Name:      entry.Name(),
                 Path:      path,

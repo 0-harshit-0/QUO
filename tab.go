@@ -15,7 +15,7 @@ type Command struct {
     PageIndex  int
     Completed chan bool // flag to know when the command is ended
 }
-type Tab struct {
+type tab struct {
     id      int
     port    uint16
     serving bool
@@ -24,14 +24,14 @@ type Tab struct {
 }
 
 
-var Tabs = make(map[int]*Tab)
+var Tabs = make(map[int]*tab)
 var CurrentTabID int = 0 // 0 id means theres no tab
-var NextTabID int = 1
+var nextTabID int = 1
 
 var portToUse uint16 = 49152
 const maxPort = 65535
 
-func (t *Tab) run() {
+func (t *tab) run() {
     for {
         select {
             case cmd, ok := <-t.command:
@@ -95,8 +95,8 @@ func NewTab(noLog bool) {
         panic("ran out of available ports")
     }
 
-    tab := &Tab{
-        id:      NextTabID,
+    tab := &tab{
+        id:      nextTabID,
         port:    portToUse,
         serving: false,
         server:  nil,
@@ -105,7 +105,7 @@ func NewTab(noLog bool) {
     go tab.run()
 
     Tabs[tab.id] = tab
-    NextTabID++
+    nextTabID++
     portToUse++
 
     if !noLog {
@@ -157,7 +157,7 @@ func CloseTab(id int) {
     }
 }
 
-func CloseHost(t *Tab) {
+func CloseHost(t *tab) {
     if t.serving == true {
         ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 

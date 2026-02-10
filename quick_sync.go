@@ -11,7 +11,7 @@ import (
 )
 
 
-type Node struct {
+type nodeJson struct {
 	Addr         string `json:"addr"`
 	Port         int `json:"port"`
 	CheckedCount int    `json:"checked_count"`
@@ -30,10 +30,6 @@ func InitWinsock() {
 	if err != nil {
 		panic(err)
 	}
-}
-func CleanupWinsock() {
-	windows.Closesocket(WinSocket)
-	windows.WSACleanup()
 }
 
 
@@ -77,7 +73,7 @@ func recv(sock windows.Handle) {
 		Addr: [4]byte{0, 0, 0, 0}, // INADDR_ANY
 	}
 
-    err = windows.Bind(sock, addr)
+    err := windows.Bind(sock, addr)
 	if err != nil {
 		panic(err)
 	}
@@ -108,21 +104,21 @@ func recv(sock windows.Handle) {
 }
 
 
-var WinSocket windows.Handle = createUDPSocket()
+var winSocket windows.Handle = createUDPSocket()
 
 func CheckActive() {
     fmt.Println("Syncing...")
 
     // ask all the nodes if they are live
 
-    nodes, err := ReadJson[[]Node](CacheDir+"/nodes.json")
+    nodes, err := ReadJson[[]nodeJson](CacheDir+"/nodes.json")
     if err != nil {
         return
     }
 
     for _, n := range nodes {
     	if n.CheckedCount < max_checked_count {
-			send(WinSocket, n.Port, n.Addr, "1")
+			send(winSocket, n.Port, n.Addr, "1")
     	}
 	}
 }
@@ -130,24 +126,32 @@ func CheckActive() {
 func RecNodes() {
     fmt.Println("Receiving Nodes...")
 
+    recv(winSocket)
 }
 
 func SendNodes(receive string) {
     fmt.Println("Sending Nodes...")
 
-    nodes, err := ReadJson[[]Node](CacheDir+"/nodes.json")
+    nodes, err := ReadJson[[]nodeJson](CacheDir+"/nodes.json")
     if err != nil {
         return
     }
 
-    addrs := make([]string, 0, len(nodes)) // lnegth: 0 | capacity: len(nodes)
+     // lnegth: 0 | capacity: len(nodes)
+    addrs := make([]string, 0, len(nodes))
     for _, n := range nodes {
     	if n.CheckedCount < (max_checked_count/2) {
 			addrs = append(addrs, n.Addr)
     	}
 	}
-	addrs = append(addrs, receive)// append the flag 0 or 1
+	// append the flag 0 or 1
+	addrs = append(addrs, receive)
 
-	send(WinSocket, 54321, "127.0.0.1", strings.Join(addrs, ","))
+	send(winSocket, 54321, "127.0.0.1", strings.Join(addrs, ","))
 }
 
+
+func CleanupWinsock() {
+	windows.Closesocket(winSocket)
+	windows.WSACleanup()
+}
