@@ -39,3 +39,8 @@ A CLI Browser
 
 ### Synchronization
 - It is running in an individual Goroutine. (parent: main)
+
+
+## TO-DO
+
+- Clean variables like `Webpages` after user goes back to main command logic.

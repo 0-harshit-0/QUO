@@ -88,19 +88,12 @@ func HelpMenu() {
                 // }
 
                 fmt.Println("Last Visited: ")
-                for key, site := range Webpages {
-                    fmt.Printf(
-                        "%d - %s | Last Updated: %s\n",
-                        key+1,
-                        site.Name,
-                        site.UpdatedAt.Format("2006-01-02 15:04:05"),
-                    )
-                }
+                ListWebpages()
 
                 searchIndex := 1 // default to first webpage
 
                 for {
-                    fmt.Print("\nSearch query (use -y to open the page or -n to go back): ")
+                    fmt.Print("\nSearch query (use -y {id} to open the page or -n to go back): ")
                     searchQuery := strings.TrimSpace(SInput())
                     parts := strings.Fields(searchQuery)
 
@@ -125,17 +118,11 @@ func HelpMenu() {
                     }
 
                     ReadWebpagesFolder(searchQuery)
-                    for key, site := range Webpages {
-                        fmt.Printf(
-                            "%d - %s | Last Updated: %s\n",
-                            key+1,
-                            site.Name,
-                            site.UpdatedAt.Format("2006-01-02 15:04:05"),
-                        )
-                    }
+                    ListWebpages()
                 }
 
                 if searchIndex != 0 {
+                    // this "completed" channel is only to know that the server has opened. Now we can move to different commands
                     completed := make(chan bool)
 
                     // send the query to tab channel
@@ -153,7 +140,19 @@ func HelpMenu() {
             case 9:
                 CheckActive()
             case len(msgs)-1:
-                ShowSettings()
+                ListSettings()
+
+                for {
+                    fmt.Print("\nSelect the setting ID to update (0 to go back): ")
+                    settingId := NInput()
+
+                    if settingId == 0 {
+                        break
+                    }
+
+                    UpdateSetting(settingId)
+                    ListSettings()
+                }
             default:
                 fmt.Println("Unknown command")
         }

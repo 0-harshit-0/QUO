@@ -2,8 +2,9 @@ package main
 
 import (
     "os"
-    "path/filepath"
+    "fmt"
     "time"
+    "path/filepath"
     "encoding/json"
     "strings"
     // "fmt"
@@ -105,4 +106,15 @@ func UpdateHistory(name string) (error) {
         return err
     }
     return os.WriteFile(path, out, 0644)
+}
+
+func ListWebpages() {
+    for key, site := range Webpages {
+        fmt.Printf(
+            "%d - %s | Last Updated: %s\n",
+            key+1,
+            site.Name,
+            site.UpdatedAt.Format("2006-01-02 15:04:05"),
+        )
+    }
 }
