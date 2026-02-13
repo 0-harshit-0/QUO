@@ -117,7 +117,7 @@ func HelpMenu() {
                         break
                     }
 
-                    ReadWebpagesFolder(searchQuery)
+                    SearchWebpagesFolder(searchQuery)
                     ListWebpages()
                 }
 
@@ -138,7 +138,8 @@ func HelpMenu() {
                 currentTab := Tabs[CurrentTabID]
                 CloseHost(currentTab)
             case 9:
-                CheckActive()
+                SendToNodes("0")
+                // CheckActive()
             case len(msgs)-1:
                 ListSettings()
 

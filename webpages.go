@@ -21,6 +21,23 @@ type webpageFolder struct {
 var Webpages []*webpageFolder
 
 
+func LoadWebpages() ([]string, error) {
+    var webpagesName []string
+
+    entries, err := os.ReadDir(RootWebpagesFolder)
+    if err != nil {
+        return nil, err
+    }
+
+    // Iterate over the entries
+    for _, file := range entries {
+        if file.IsDir() {
+            webpagesName = append(webpagesName, file.Name())
+        }
+    }
+
+    return webpagesName, nil
+}
 
 // save and load folder_name, and then use that names to load them in Webpages
 func ReadWebpagesHistory() {
@@ -45,8 +62,7 @@ func ReadWebpagesHistory() {
     }
 }
 
-
-func ReadWebpagesFolder(search string) {
+func SearchWebpagesFolder(search string) {
     //start int, limit int
     entries, err := os.ReadDir(RootWebpagesFolder)
     if err != nil {
@@ -84,7 +100,6 @@ func ReadWebpagesFolder(search string) {
         }
     }
 }
-
 
 func UpdateHistory(name string) (error) {
     path := CacheDir+"/history.json"

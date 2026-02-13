@@ -38,8 +38,11 @@ func main() {
 `
     fmt.Println(strings.ReplaceAll(asciiName, "-", " "), "\n")
     
-    // start the browser, by starting a tab
+    // start the browser, by starting a tab, etc.
+    LoadSettings()
     NewTab(true)
+
+    RecvFromNodes()
     BrowserState()
     fmt.Println()
     

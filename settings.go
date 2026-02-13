@@ -11,18 +11,22 @@ import (
 
 type settingsJson struct {
     Receiver             bool `json:"receiver"`
-    Discoverable         bool `json:"discoverable"`
     AllowSync            bool `json:"allow_sync"`
 }
 var Settings settingsJson
 
 
-func ListSettings() {
+func LoadSettings() {
     var err error
     Settings, err = ReadJson[settingsJson](ConfigDir+"/settings.json")
     if err != nil {
         return
     }
+}
+
+func ListSettings() {
+    // add a restart flag, this way if user has not restarted we can safely ignore calling other functions or restart automatically
+    fmt.Println("Restart the browser after updating the settings")
 
     v := reflect.ValueOf(Settings)
     t := reflect.TypeOf(Settings)
@@ -45,8 +49,6 @@ func UpdateSetting(id int) error {
         case 1:
             Settings.Receiver = !Settings.Receiver
         case 2:
-            Settings.Discoverable = !Settings.Discoverable
-        case 3:
             Settings.AllowSync = !Settings.AllowSync
         default:
             fmt.Println("\nInvalid setting\n")

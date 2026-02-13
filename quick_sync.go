@@ -18,20 +18,23 @@ type nodeJson struct {
 	Type         string `json:"type"`
 }
 
+
 var max_checked_count int = 6
 var recv_port int = 54321
+
+var winSocket windows.Handle = createUDPSocket()
 
 
 // goes to the main thread
 func InitWinsock() {
 	// Initialize Winsock
 	var wsa windows.WSAData
+
 	err := windows.WSAStartup(uint32(0x202), &wsa)
 	if err != nil {
 		panic(err)
 	}
 }
-
 
 func createUDPSocket() windows.Handle {
 	sock, err := windows.Socket(
@@ -42,9 +45,11 @@ func createUDPSocket() windows.Handle {
 	if err != nil {
 		panic(err)
 	}
+
 	// defer windows.Closesocket(sock)
 	return sock
 }
+
 
 func send(sock windows.Handle, dst_port int, dst_addr string, msg string) {
 	ip := net.ParseIP(dst_addr)
@@ -78,7 +83,7 @@ func recv(sock windows.Handle) {
 		panic(err)
 	}
 
-	fmt.Print("Listening on UDP port %s\n", recv_port)
+	// fmt.Print("Listening on UDP port %s\n", recv_port)
 
 	buf := make([]byte, 2048)
 
@@ -86,7 +91,7 @@ func recv(sock windows.Handle) {
 		n, from, err := windows.Recvfrom(sock, buf, 0)
 		if err != nil {
 			fmt.Println("recv error:", err)
-			continue
+			return
 		}
 
 		fromAddr := from.(*windows.SockaddrInet4)
@@ -104,9 +109,12 @@ func recv(sock windows.Handle) {
 }
 
 
-var winSocket windows.Handle = createUDPSocket()
-
 func CheckActive() {
+	if Settings.Receiver == false {
+		fmt.Println("Enable the Receiver first")
+		return
+	}
+
     fmt.Println("Syncing...")
 
     // ask all the nodes if they are live
@@ -123,31 +131,34 @@ func CheckActive() {
 	}
 }
 
-func RecNodes() {
-    fmt.Println("Receiving Nodes...")
+func RecvFromNodes() bool {
+	if Settings.Receiver == false {
+		fmt.Println("Receiver is disabled")
 
-    recv(winSocket)
+		CleanupWinsock()
+		return Settings.Receiver
+	}
+
+    fmt.Printf("Receiver started at port %s\n", recv_port)
+    go recv(winSocket)
+
+    return Settings.Receiver
 }
 
-func SendNodes(receive string) {
-    fmt.Println("Sending Nodes...")
+func SendToNodes(receive string) error {
+	// receive: 1 or 0
+    fmt.Println("Sending...")
 
-    nodes, err := ReadJson[[]nodeJson](CacheDir+"/nodes.json")
+    data, err := LoadWebpages()
     if err != nil {
-        return
+    	return err
     }
 
-     // lnegth: 0 | capacity: len(nodes)
-    addrs := make([]string, 0, len(nodes))
-    for _, n := range nodes {
-    	if n.CheckedCount < (max_checked_count/2) {
-			addrs = append(addrs, n.Addr)
-    	}
-	}
-	// append the flag 0 or 1
-	addrs = append(addrs, receive)
+	// append the flag 1 or 0
+	data = append(data, receive)
+	send(winSocket, recv_port, "127.0.0.1", strings.Join(data, ","))
 
-	send(winSocket, 54321, "127.0.0.1", strings.Join(addrs, ","))
+	return nil
 }
 
 
@@ -155,3 +166,6 @@ func CleanupWinsock() {
 	windows.Closesocket(winSocket)
 	windows.WSACleanup()
 }
+
+
+
