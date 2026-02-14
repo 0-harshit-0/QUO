@@ -1,5 +1,4 @@
 {
-	"receiver": true,
-	"discoverable": true,
-	"allow_sync": true
+  "receiver": true,
+  "allow_sync": true
 }

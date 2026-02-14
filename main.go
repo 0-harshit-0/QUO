@@ -40,9 +40,10 @@ func main() {
     
     // start the browser, by starting a tab, etc.
     LoadSettings()
+    LoadNodes(6)
+    RecvFromNodes()
     NewTab(true)
 
-    RecvFromNodes()
     BrowserState()
     fmt.Println()
     

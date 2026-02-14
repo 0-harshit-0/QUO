@@ -138,8 +138,7 @@ func HelpMenu() {
                 currentTab := Tabs[CurrentTabID]
                 CloseHost(currentTab)
             case 9:
-                SendToNodes("0")
-                // CheckActive()
+                CheckActive()
             case len(msgs)-1:
                 ListSettings()
 
