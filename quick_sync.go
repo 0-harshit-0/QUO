@@ -5,8 +5,11 @@ package main
 
 import (
 	"golang.org/x/sys/windows"
+	"os"
+	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -43,7 +46,7 @@ func createUDPSocket() windows.Handle {
 		windows.IPPROTO_UDP,
 	)
 	if err != nil {
-		panic(err)
+		Logger.Error("UDP socket error", err)
 	}
 
 	// defer windows.Closesocket(sock)
@@ -54,21 +57,27 @@ func createUDPSocket() windows.Handle {
 func send(sock windows.Handle, dst_port int, dst_addr string, msg string) {
 	ip := net.ParseIP(dst_addr)
 	if ip == nil {
-		panic("invalid IP address")
+		Logger.Error("Invalid IPv4 address")
+		return
 	}
 
 	ip4 := ip.To4()
 	if ip4 == nil {
-		panic("not an IPv4 address")
+		Logger.Error("Invalid IPv4 address")
+		return
 	}
 
 	addr := &windows.SockaddrInet4{
 		Port: dst_port,
 		Addr: [4]byte{ip4[0], ip4[1], ip4[2], ip4[3]},
 	}
+
+    Logger.Info("Sending a packet...", "port", dst_port, "addr", dst_addr, "data", msg)
+
 	err := windows.Sendto(sock, []byte(msg), 0, addr)
 	if err != nil {
-		panic(err)
+		Logger.Error("Send error:", err)
+		return
 	}
 }
 
@@ -90,13 +99,13 @@ func recv(sock windows.Handle) {
 	for {
 		n, from, err := windows.Recvfrom(sock, buf, 0)
 		if err != nil {
-			fmt.Println("recv error:", err)
+			Logger.Error("Recv error:", err)
 			return
 		}
 
 		fromAddr, ok := from.(*windows.SockaddrInet4)
 		if !ok {
-			fmt.Println("not an IPv4 address")
+			Logger.Error("Not an IPv4 address")
 			return
 		}
 
@@ -117,15 +126,22 @@ func recv(sock windows.Handle) {
 			fromAddr.Addr[2],
 			fromAddr.Addr[3],
 		)
+		recvData := string(buf[:n])
 
-		processRecvData(recvFromIP, string(buf[:n]))
+    	Logger.Info("Received a packet...", "port", recvPort, "addr", recvFromIP, "data_size", n)
+
+		processRecvData(recvFromIP, recvData)
 	}
 }
 
 func processRecvData(ip string, data string) {
 	substrings := strings.Split(data, ",")
 
-	if len(substrings) > 0 && strings.TrimSpace(substrings[0]) == "1" && Settings.AllowSync {
+	if len(substrings) == 0 {
+		return
+	}
+
+	if strings.TrimSpace(substrings[0]) == "1" && Settings.AllowSync {
 		// asking for nodes to complete sync
 	    var nodes []string
 		for _, n := range allNodes {
@@ -133,14 +149,36 @@ func processRecvData(ip string, data string) {
 		}
 
 		SendToNode(ip, "n", strings.Join(nodes, ","), "0")
+		return
 	}
 
+	if strings.TrimSpace(substrings[0]) == "n" && len(substrings) > 2 {
+		// receiving nodes, save them
+		for i := 1; i < len(substrings)-1; i++ {
+			values := strings.Split(substrings[i], ":")
+
+			port, _ := strconv.Atoi(values[1])
+
+		    newNode := nodeJson{
+		    	Addr: values[0],
+		    	Port: port,
+		    	CheckedCount: 0,
+		    }
+
+		    allNodes = append(allNodes, newNode)
+		}
+
+		SaveNodes()
+	}
 }
 
 
 func LoadNodes(maxCount int) {
+    Logger.Info("Loading Nodes Config File")
+
 	nodes, err := ReadJson[[]nodeJson](ConfigDir+"/nodes.json")
     if err != nil {
+    	Logger.Error("Error loading nodes", err)
         return
     }
 
@@ -152,6 +190,20 @@ func LoadNodes(maxCount int) {
 
 	// return allNodes
 }
+
+func SaveNodes() {
+    path := ConfigDir+"/nodes.json"
+
+    // write back to file
+    out, err := json.MarshalIndent(allNodes, "", "  ")
+    if err != nil {
+    	Logger.Error("Error saving nodes", err)
+        return
+    }
+
+    os.WriteFile(path, out, 0644)
+}
+
 
 func CheckActive() {
 	if Settings.Receiver == false {
@@ -175,7 +227,7 @@ func RecvFromNodes() bool {
 		return Settings.Receiver
 	}
 
-    fmt.Printf("Receiver started at port %s\n", recvPort)
+    fmt.Printf("Receiver started at port %d\n", recvPort)
     go recv(winSocket)
 
     return Settings.Receiver
@@ -186,7 +238,6 @@ func SendToNode(dst_addr string, datatype string, data string, sync_flag string)
 	// sync_flag: 1 or 0
     
     // fmt.Println("Sending...")
-
     payload := datatype + "," + data + "," + sync_flag
 
 	send(winSocket, recvPort, dst_addr, payload)
