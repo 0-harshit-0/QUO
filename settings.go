@@ -17,6 +17,8 @@ var Settings settingsJson
 
 
 func LoadSettings() {
+    Logger.Info("Loading Settings Config File")
+
     var err error
     Settings, err = ReadJson[settingsJson](ConfigDir+"/settings.json")
     if err != nil {
@@ -53,6 +55,8 @@ func UpdateSetting(id int) error {
         default:
             fmt.Println("\nInvalid setting\n")
     }
+
+    Logger.Info("Updating Settings Config File")
 
     data, err := json.MarshalIndent(Settings, "", "  ")
     if err != nil {

@@ -24,6 +24,14 @@ func QuitBrowser() {
 }
 
 func main() {
+    _, file, err := NewLogger()
+    if err != nil {
+        panic(err)
+    }
+    defer file.Close()
+    
+    Logger.Info("Starting Browser")
+
     // start a common winsock for the whole program
     InitWinsock()
     defer CleanupWinsock()
@@ -38,15 +46,21 @@ func main() {
 `
     fmt.Println(strings.ReplaceAll(asciiName, "-", " "), "\n")
     
-    // start the browser, by starting a tab, etc.
+    // load settings and files
     LoadSettings()
     LoadNodes(6)
+
+    // the quick-sync receiver
     RecvFromNodes()
+
+    // start the browser, by starting a tab, etc.
     NewTab(true)
 
+    // show the browser state
     BrowserState()
     fmt.Println()
     
+    // user I/O
     done := make(chan struct{})
     go func() {
         // ReadWebpagesFolder(0, 10)
@@ -54,4 +68,6 @@ func main() {
         close(done)
     }()
     <- done
+
+    Logger.Info("Closing Browser")
 }
