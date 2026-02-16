@@ -6,11 +6,11 @@ package main
 import (
 	"golang.org/x/sys/windows"
 	"os"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
+	"encoding/json"
 )
 
 
@@ -38,6 +38,7 @@ func InitWinsock() {
 		panic(err)
 	}
 }
+
 
 func createUDPSocket() windows.Handle {
 	sock, err := windows.Socket(

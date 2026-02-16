@@ -43,4 +43,5 @@ A CLI Browser
 
 ## TO-DO
 
-- Clean variables like `Webpages` after user goes back to main command logic.
+- Clean variables like `Webpages` after user goes back to main user input.
+- anyone can send nodes, without limit. add some rate limit to receiving nodes and the receivers.
