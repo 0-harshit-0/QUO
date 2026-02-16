@@ -41,7 +41,7 @@ func HelpMenu() {
         6: "Search",
         7: "Close Host",
         8: "",
-        9: "Sync Webpages",
+        9: "Sync Nodes",
         10: "",
         11: "",
         "Settings",
