@@ -5,6 +5,7 @@ package main
 
 import (
 	"golang.org/x/sys/windows"
+	"unsafe"
 	"fmt"
 	"net"
 	"strconv"
@@ -42,6 +43,64 @@ func createUDPSocket() windows.Handle {
 
 	// defer windows.Closesocket(sock)
 	return sock
+}
+
+func GetLocalIPs() []string {
+	var ips []string
+
+	var size uint32
+	// First call to get required buffer size
+	err := windows.GetAdaptersAddresses(
+		windows.AF_INET,
+		windows.GAA_FLAG_SKIP_ANYCAST|
+			windows.GAA_FLAG_SKIP_MULTICAST|
+			windows.GAA_FLAG_SKIP_DNS_SERVER,
+		0,
+		nil,
+		&size,
+	)
+
+	if err != windows.ERROR_BUFFER_OVERFLOW {
+		return ips
+	}
+
+	buf := make([]byte, size)
+	addr := (*windows.IpAdapterAddresses)(unsafe.Pointer(&buf[0]))
+
+	err = windows.GetAdaptersAddresses(
+		windows.AF_INET,
+		windows.GAA_FLAG_SKIP_ANYCAST|
+			windows.GAA_FLAG_SKIP_MULTICAST|
+			windows.GAA_FLAG_SKIP_DNS_SERVER,
+		0,
+		addr,
+		&size,
+	)
+
+	if err != nil {
+		return ips
+	}
+
+	for aa := addr; aa != nil; aa = aa.Next {
+		// iterate unicast addresses
+		for ua := aa.FirstUnicastAddress; ua != nil; ua = ua.Next {
+			// get raw socket address pointer
+			sa := (*windows.RawSockaddrInet4)(unsafe.Pointer(ua.Address.Sockaddr))
+			if sa.Family == windows.AF_INET {
+				// copy to a byte array
+				ipBytes := sa.Addr
+				ip := fmt.Sprintf("%d.%d.%d.%d",
+					ipBytes[0],
+					ipBytes[1],
+					ipBytes[2],
+					ipBytes[3],
+				)
+				ips = append(ips, ip)
+			}
+		}
+	}
+	
+	return ips
 }
 
 

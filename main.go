@@ -15,7 +15,9 @@ var RootWebpagesFolder string = "webpages" // root webpages folder
 
 
 func BrowserState() {
-    fmt.Printf("Current Tab: %d | Total tabs: %d\n", CurrentTabID, len(Tabs))
+    ips := GetLocalIPs()
+
+    fmt.Printf("Current Tab: %d | Total tabs: %d | IP: %v\n", CurrentTabID, len(Tabs), ips)
 }
 func QuitBrowser() {
     //  When the channel(pipe) is closed, it signals each tab and closes active host. After this it returns and the HelpMessage loop ends which results in the closure of the last goroutine and leads to a graceful shutdown
