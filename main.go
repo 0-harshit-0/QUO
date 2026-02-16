@@ -51,7 +51,7 @@ func main() {
     LoadNodes(6)
 
     // the quick-sync receiver
-    RecvFromNodes()
+    RecvFrom()
 
     // start the browser, by starting a tab, etc.
     NewTab(true)

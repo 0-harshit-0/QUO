@@ -5,23 +5,13 @@ package main
 
 import (
 	"golang.org/x/sys/windows"
-	"os"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
-	"encoding/json"
 )
 
 
-type nodeJson struct {
-	Addr         string `json:"addr"`
-	Port         int    `json:"port"`
-	CheckedCount int    `json:"checked_count"`
-}
-
-
-var allNodes []nodeJson
 var recvPort int = 54321
 
 var winSocket windows.Handle = createUDPSocket()
@@ -145,11 +135,11 @@ func processRecvData(ip string, data string) {
 	if strings.TrimSpace(substrings[0]) == "1" && Settings.AllowSync {
 		// asking for nodes to complete sync
 	    var nodes []string
-		for _, n := range allNodes {
+		for _, n := range AllNodes {
 			nodes = append(nodes, fmt.Sprintf("%s:%d", n.Addr, n.Port))
 		}
 
-		SendToNode(ip, "n", strings.Join(nodes, ","), "0")
+		SendTo(ip, "n", strings.Join(nodes, ","), "0")
 		return
 	}
 
@@ -160,49 +150,11 @@ func processRecvData(ip string, data string) {
 
 			port, _ := strconv.Atoi(values[1])
 
-		    newNode := nodeJson{
-		    	Addr: values[0],
-		    	Port: port,
-		    	CheckedCount: 0,
-		    }
-
-		    allNodes = append(allNodes, newNode)
+			UpdateNodes(values[0], port)
 		}
 
 		SaveNodes()
 	}
-}
-
-
-func LoadNodes(maxCount int) {
-    Logger.Info("Loading Nodes Config File")
-
-	nodes, err := ReadJson[[]nodeJson](ConfigDir+"/nodes.json")
-    if err != nil {
-    	Logger.Error("Error loading nodes", err)
-        return
-    }
-
-    for _, n := range nodes {
-    	if n.CheckedCount < maxCount {
-    		allNodes = append(allNodes, n)
-    	}
-	}
-
-	// return allNodes
-}
-
-func SaveNodes() {
-    path := ConfigDir+"/nodes.json"
-
-    // write back to file
-    out, err := json.MarshalIndent(allNodes, "", "  ")
-    if err != nil {
-    	Logger.Error("Error saving nodes", err)
-        return
-    }
-
-    os.WriteFile(path, out, 0644)
 }
 
 
@@ -215,12 +167,12 @@ func CheckActive() {
     fmt.Println("Syncing...")
 
     // ask all the nodes if they are live
-    for _, n := range allNodes {
+    for _, n := range AllNodes {
 		send(winSocket, n.Port, n.Addr, "1")
 	}
 }
 
-func RecvFromNodes() bool {
+func RecvFrom() bool {
 	if Settings.Receiver == false {
 		fmt.Println("Receiver is disabled")
 
@@ -234,7 +186,7 @@ func RecvFromNodes() bool {
     return Settings.Receiver
 }
 
-func SendToNode(dst_addr string, datatype string, data string, sync_flag string) error {
+func SendTo(dst_addr string, datatype string, data string, sync_flag string) error {
 	// datatype: n for nodes, w for webpages
 	// sync_flag: 1 or 0
     
