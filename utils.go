@@ -3,7 +3,6 @@ package main
 import (
     "os"
     "encoding/json"
-    "log"
     "fmt"
 )
 
@@ -13,13 +12,13 @@ func ReadJson[T any](path string) (T, error) {
 
     jsonData, err := os.ReadFile(path)
     if err != nil {
-        log.Printf("failed to read json file: %v\n", err)
+        fmt.Printf("failed to read json file: %v\n", err)
         return data, err
     }
 
     // Unmarshal the byte slice into the Response struct
     if err := json.Unmarshal(jsonData, &data); err != nil {
-        log.Printf("failed to unmarshal json data: %v\n", err)
+        fmt.Printf("failed to unmarshal json data: %v\n", err)
         return data, err
     }
 
