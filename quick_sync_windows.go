@@ -141,7 +141,7 @@ func recv(sock windows.Handle) {
 
     err := windows.Bind(sock, addr)
 	if err != nil {
-		panic(err)
+        Logger.Error("Error:", err)
 	}
 
 	// fmt.Print("Listening on UDP port %s\n", recvPort)
@@ -228,7 +228,7 @@ func CheckActive() {
 	}
 
 	Logger.Info("Started Syncing")
-    fmt.Println("Syncing...")
+    fmt.Println("Syncing in the background...")
 
     // ask all the nodes if they are live
     for _, n := range AllNodes {
