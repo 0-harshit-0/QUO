@@ -16,7 +16,7 @@ A CLI Browser
 ## Concepts
 
 ### Browser
-- 
+- Shutdown channel is the global channel that shutsdown all the tab. The command channel is local channel that only has access to a particular tab
 
 ### User Input
 - It is running in an individual Goroutine. (parent: main)
@@ -29,9 +29,8 @@ A CLI Browser
 ### Webpage
 - A webpage is simply a static HTML/CSS/JS directory.
 - All the webpages are read from the `/webpages` directory.
-- Three way to _remove_ or _add_ a new webpage to the browser:
+- Two way to _remove_ or _add_ a new webpage to the browser:
 	- You can paste the directory that contains the necessary files inside the `/webpages`.
-	- Use the `Sync Webpages` option after running the browser.
 	- Use the `Search` option and try searching for the particular webpage.
 
 ### Search
@@ -39,9 +38,12 @@ A CLI Browser
 
 ### Synchronization
 - It is running in an individual Goroutine. (parent: main)
+- If another browser sends a message starting with "1" then that means they are checking if you are active and like to send the nodes copy you have
+- If the message starts with "n" then it is the list of nodes, ip:port,ip:port...
 
 
 ## TO-DO
 
+- Implement QUIC
 - Clean variables like `Webpages` after user goes back to main user input.
 - anyone can send nodes, without limit. add some rate limit to receiving nodes and the receivers.

@@ -22,6 +22,7 @@ func LoadSettings() {
     var err error
     Settings, err = ReadJson[settingsJson](ConfigDir+"/settings.json")
     if err != nil {
+        Logger.Error("Error:", err)
         return
     }
 }
@@ -60,6 +61,7 @@ func UpdateSetting(id int) error {
 
     data, err := json.MarshalIndent(Settings, "", "  ")
     if err != nil {
+        Logger.Error("Error:", err)
         return err
     }
 

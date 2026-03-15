@@ -63,20 +63,20 @@ func HelpMenu() {
             case 2:
                 PrintInRows(6, msgs)
             case 3:
-                NewTab(false)
+                NewTab()
             case 4:
                 fmt.Println("Available Tabs: ")
                 for _, tab := range Tabs {
                     if tab.serving {
                         fmt.Printf("%d - Running a host on %d\n", tab.id, tab.port)
                     } else {
-                        fmt.Printf("%d - Free\n", tab.id)
+                        fmt.Printf("%d - Available\n", tab.id)
                     }
                 }
 
                 fmt.Print("\nTab Id: ")
                 switchTabID := NInput()
-                SwitchTab(switchTabID, false)
+                SwitchTab(switchTabID)
             case 5:
                 CloseTab(CurrentTabID)
             case 6:
@@ -135,8 +135,7 @@ func HelpMenu() {
                     <- completed
                 }
             case 7:
-                currentTab := Tabs[CurrentTabID]
-                CloseHost(currentTab)
+                CloseHost(Tabs[CurrentTabID])
             case 9:
                 CheckActive()
             case len(msgs)-1:

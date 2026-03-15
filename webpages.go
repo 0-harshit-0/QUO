@@ -120,6 +120,8 @@ func UpdateHistory(name string) (error) {
     if err != nil {
         return err
     }
+
+    Logger.Info("Update webpages history")
     return os.WriteFile(path, out, 0644)
 }
 

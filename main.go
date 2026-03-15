@@ -50,13 +50,13 @@ func main() {
     
     // load settings and files
     LoadSettings()
-    LoadNodes(6)
+    LoadNodes()
 
     // the quick-sync receiver
     RecvFrom()
 
     // start the browser, by starting a tab, etc.
-    NewTab(true)
+    NewTab()
 
     // show the browser state
     BrowserState()

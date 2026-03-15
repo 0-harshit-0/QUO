@@ -3,7 +3,6 @@ package main
 import (
     "os"
     "fmt"
-    "log"
     "net"
     "net/http"
 )
@@ -12,6 +11,7 @@ import (
 func Host(path string, name string, port uint16) (*http.Server, error) {
     info, err := os.Stat(path)
     if err != nil {
+        Logger.Error("Error:", err)
         return nil, err
     }
     if !info.IsDir() {
@@ -30,15 +30,17 @@ func Host(path string, name string, port uint16) (*http.Server, error) {
 
     ln, err := net.Listen("tcp", addr)
     if err != nil {
+        Logger.Error("Error:", err)
         return nil, err
     }
 
+    Logger.Info("Serving %s at http://localhost%s\n", name, addr)
 	fmt.Printf("Serving %s at http://localhost%s\n", name, addr)
 
     go func() {
         err := srv.Serve(ln)
         if err != nil && err != http.ErrServerClosed {
-            log.Println("server error:", err)
+            Logger.Error("server error:", err)
         }
     }()
 

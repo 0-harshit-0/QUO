@@ -47,8 +47,9 @@ func (t *tab) run() {
                         //     fmt.Println("\nInvalid folder id\n")
                         //     continue
                         // }
-                        if cmd.PageIndex < 0 || cmd.PageIndex > len(Webpages) {
-                            fmt.Println("\nFolder not found")
+
+                        if cmd.PageIndex < 0 || cmd.PageIndex > len(Webpages) || len(Webpages) == 0 {
+                            fmt.Println("\nWebpage not found")
                             cmd.Completed <- true
                             continue
                         }
@@ -57,6 +58,7 @@ func (t *tab) run() {
                         CloseHost(t)
 
                         if t.serving {//just a fail safe
+                            Logger.Error("Already serving at port: %d\n", t.port)
                             fmt.Printf("Already serving at port: %d\n", t.port)
                             cmd.Completed <- true
                             continue
@@ -64,7 +66,7 @@ func (t *tab) run() {
 
                         srv, err := Host(Webpages[cmd.PageIndex].Path, Webpages[cmd.PageIndex].Name, t.port)
                         if err != nil {
-                            fmt.Println("Error: ", err)
+                            Logger.Error("Error: ", err)
                             cmd.Completed <- true
                             continue
                         }
@@ -89,7 +91,7 @@ func (t *tab) run() {
 }
 
 
-func NewTab(nofmt bool) {
+func NewTab() {
     if portToUse > maxPort {
         panic("ran out of available ports")
     }
@@ -107,28 +109,42 @@ func NewTab(nofmt bool) {
     nextTabID++
     portToUse++
 
-    if !nofmt {
-        fmt.Printf("New tab (%d) opened\n", tab.id)
-    }
+    Logger.Info("New tab (%d) opened\n", tab.id)
 
     // switch the tab
-    SwitchTab(tab.id, nofmt)
+    SwitchTab(tab.id)
 }
 
-func SwitchTab(id int, nofmt bool) {
+func SwitchTab(id int) {
     _, ok := Tabs[id]
     if ok {
         CurrentTabID = id
-        if !nofmt {
-            fmt.Printf("Switched to %d", CurrentTabID)
-        }
+        Logger.Info("Switched to %d", CurrentTabID)
     } else {
+        Logger.Error("Tab does not exist")
         fmt.Println("Tab does not exist")
     }
 }
 
+
+func CloseHost(t *tab) {
+    if t.serving == true {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+        err := t.server.Shutdown(ctx);
+        if err != nil {
+            Logger.Error("shutdown error:", err)
+        }
+
+        cancel() // defer it for gracefullness
+        Logger.Info("Closing port: %d", t.port)
+        // t.server = nil
+        t.serving = false
+    }
+}
+
 func CloseTab(id int) {
-    fmt.Printf("Closing: %d\n", id)
+    Logger.Info("Closing %d", id)
 
     tab, ok := Tabs[id];
     if ok {
@@ -140,7 +156,7 @@ func CloseTab(id int) {
         delete(Tabs, id)
         
         if len(Tabs) == 0 {
-            fmt.Println("All tabs closed")
+            Logger.Info("All tabs closed")
             CurrentTabID = 0
             return
         }
@@ -148,7 +164,7 @@ func CloseTab(id int) {
         // replacing the current tab id with the other one else it will point to a closed tab
         for key, _ := range Tabs {
             CurrentTabID = key
-            fmt.Printf("Switched to: %d", CurrentTabID)
+            Logger.Info("Switched to: %d", CurrentTabID)
             break
         }
     } else {
@@ -156,21 +172,7 @@ func CloseTab(id int) {
     }
 }
 
-func CloseHost(t *tab) {
-    if t.serving == true {
-        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-        err := t.server.Shutdown(ctx);
-        if err != nil {
-            fmt.Println("shutdown error:", err)
-        }
-
-        cancel() // defer it for gracefullness
-        fmt.Printf("Closing port: %d\n", t.port)
-        // t.server = nil
-        t.serving = false
-    }
-}
 // func CloseAllTabs() {
 //     for id, tab := range Tabs {
 //         close(tab.command)

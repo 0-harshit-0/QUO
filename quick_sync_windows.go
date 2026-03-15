@@ -26,7 +26,7 @@ func InitWinsock() {
 
 	err := windows.WSAStartup(uint32(0x202), &wsa)
 	if err != nil {
-		panic(err)
+        Logger.Error("Error:", err)
 	}
 }
 
@@ -61,6 +61,7 @@ func GetLocalIPs() []string {
 	)
 
 	if err != windows.ERROR_BUFFER_OVERFLOW {
+        Logger.Error("Error:", err)
 		return ips
 	}
 
@@ -78,6 +79,7 @@ func GetLocalIPs() []string {
 	)
 
 	if err != nil {
+        Logger.Error("Error:", err)
 		return ips
 	}
 
@@ -198,12 +200,14 @@ func processRecvData(ip string, data string) {
 			nodes = append(nodes, fmt.Sprintf("%s:%d", n.Addr, n.Port))
 		}
 
+    	Logger.Info("Sending Nodes")
 		SendTo(ip, "n", strings.Join(nodes, ","), "0")
 		return
 	}
 
 	if strings.TrimSpace(substrings[0]) == "n" && len(substrings) > 2 {
 		// receiving nodes, save them
+    	Logger.Info("Receiving Nodes")
 		for i := 1; i < len(substrings)-1; i++ {
 			values := strings.Split(substrings[i], ":")
 
@@ -219,10 +223,11 @@ func processRecvData(ip string, data string) {
 
 func CheckActive() {
 	if Settings.Receiver == false {
-		fmt.Println("Enable the Receiver first")
+    	Logger.Info("Receiver is disabled")
 		return
 	}
 
+	Logger.Info("Started Syncing")
     fmt.Println("Syncing...")
 
     // ask all the nodes if they are live
@@ -233,13 +238,13 @@ func CheckActive() {
 
 func RecvFrom() bool {
 	if Settings.Receiver == false {
-		fmt.Println("Receiver is disabled")
+    	Logger.Info("Receiver is disabled")
 
 		CleanupWinsock()
 		return Settings.Receiver
 	}
 
-    fmt.Printf("Receiver started at port %d\n", recvPort)
+    Logger.Info("Receiver started at port %d\n", recvPort)
     go recv(winSocket)
 
     return Settings.Receiver

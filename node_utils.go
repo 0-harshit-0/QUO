@@ -17,7 +17,7 @@ type nodeJson struct {
 var AllNodes []nodeJson
 
 
-func LoadNodes(maxCount int) {
+func LoadNodes() {
     Logger.Info("Loading Nodes Config File")
 
 	nodes, err := ReadJson[[]nodeJson](ConfigDir+"/nodes.json")
@@ -27,13 +27,14 @@ func LoadNodes(maxCount int) {
     }
 
     for _, n := range nodes {
-    	if n.CheckedCount < maxCount {
+    	if n.CheckedCount < 6 {
     		AllNodes = append(AllNodes, n)
     	}
 	}
 
 	// return AllNodes
 }
+
 
 func UpdateNodes(ip string, port int) {
     newNode := nodeJson{
@@ -45,6 +46,7 @@ func UpdateNodes(ip string, port int) {
     AllNodes = append(AllNodes, newNode)
 }
 
+
 func SaveNodes() {
     path := ConfigDir+"/nodes.json"
 
@@ -55,5 +57,6 @@ func SaveNodes() {
         return
     }
 
+    Logger.Info("Saving nodes")
     os.WriteFile(path, out, 0644)
 }
