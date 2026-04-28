@@ -1,4 +1,4 @@
 {
-  "receiver": true,
+  "receiver": false,
   "allow_sync": true
 }

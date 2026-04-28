@@ -1,62 +1,56 @@
 package main
 
-
 import (
-    "os"
-    "encoding/json"
+	"encoding/json"
+	"os"
 )
 
-
 type nodeJson struct {
-    Addr         string `json:"addr"`
-    Port         int    `json:"port"`
-    CheckedCount int    `json:"checked_count"`
+	Addr         string `json:"addr"`
+	Port         int    `json:"port"`
+	CheckedCount int    `json:"checked_count"`
 }
-
 
 var AllNodes []nodeJson
 
-
 func LoadNodes() {
-    Logger.Info("Loading Nodes Config File")
+	Logger.Info("Loading Nodes Config File")
 
-	nodes, err := ReadJson[[]nodeJson](ConfigDir+"/nodes.json")
-    if err != nil {
-    	Logger.Error("Error loading nodes", err)
-        return
-    }
+	nodes, err := ReadJson[[]nodeJson](ConfigDir + "/nodes.json")
+	if err != nil {
+		Logger.Error("Error loading nodes", "error", err)
+		return
+	}
 
-    for _, n := range nodes {
-    	if n.CheckedCount < 6 {
-    		AllNodes = append(AllNodes, n)
-    	}
+	for _, n := range nodes {
+		if n.CheckedCount < 6 {
+			AllNodes = append(AllNodes, n)
+		}
 	}
 
 	// return AllNodes
 }
 
-
 func UpdateNodes(ip string, port int) {
-    newNode := nodeJson{
-        Addr: ip,
-        Port: port,
-        CheckedCount: 0,
-    }
+	newNode := nodeJson{
+		Addr:         ip,
+		Port:         port,
+		CheckedCount: 0,
+	}
 
-    AllNodes = append(AllNodes, newNode)
+	AllNodes = append(AllNodes, newNode)
 }
 
-
 func SaveNodes() {
-    path := ConfigDir+"/nodes.json"
+	path := ConfigDir + "/nodes.json"
 
-    // write back to file
-    out, err := json.MarshalIndent(AllNodes, "", "  ")
-    if err != nil {
-    	Logger.Error("Error saving nodes", err)
-        return
-    }
+	// write back to file
+	out, err := json.MarshalIndent(AllNodes, "", "  ")
+	if err != nil {
+		Logger.Error("Error saving nodes", "error", err)
+		return
+	}
 
-    Logger.Info("Saving nodes")
-    os.WriteFile(path, out, 0644)
+	Logger.Info("Saving nodes")
+	os.WriteFile(path, out, 0644)
 }

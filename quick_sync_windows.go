@@ -2,22 +2,21 @@
 
 package main
 
-
 import (
-	"golang.org/x/sys/windows"
-	"unsafe"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
-)
+	"unsafe"
 
+	"golang.org/x/sys/windows"
+)
 
 var recvPort int = 54321
 
 var winSocket windows.Handle = createUDPSocket()
-// received_data := make(map[string]string)
 
+// received_data := make(map[string]string)
 
 // goes to the main thread
 func InitWinsock() {
@@ -26,10 +25,9 @@ func InitWinsock() {
 
 	err := windows.WSAStartup(uint32(0x202), &wsa)
 	if err != nil {
-        Logger.Error("Error:", err)
+		Logger.Error("Error:", err)
 	}
 }
-
 
 func createUDPSocket() windows.Handle {
 	sock, err := windows.Socket(
@@ -61,7 +59,7 @@ func GetLocalIPs() []string {
 	)
 
 	if err != windows.ERROR_BUFFER_OVERFLOW {
-        Logger.Error("Error:", err)
+		Logger.Error("Error:", err)
 		return ips
 	}
 
@@ -79,7 +77,7 @@ func GetLocalIPs() []string {
 	)
 
 	if err != nil {
-        Logger.Error("Error:", err)
+		Logger.Error("Error:", err)
 		return ips
 	}
 
@@ -101,10 +99,9 @@ func GetLocalIPs() []string {
 			}
 		}
 	}
-	
+
 	return ips
 }
-
 
 func send(sock windows.Handle, dst_port int, dst_addr string, msg string) {
 	ip := net.ParseIP(dst_addr)
@@ -124,7 +121,7 @@ func send(sock windows.Handle, dst_port int, dst_addr string, msg string) {
 		Addr: [4]byte{ip4[0], ip4[1], ip4[2], ip4[3]},
 	}
 
-    Logger.Info("Sending a packet...", "port", dst_port, "addr", dst_addr, "data", msg)
+	Logger.Info("Sending a packet...", "port", dst_port, "addr", dst_addr, "data", msg)
 
 	err := windows.Sendto(sock, []byte(msg), 0, addr)
 	if err != nil {
@@ -139,9 +136,9 @@ func recv(sock windows.Handle) {
 		Addr: [4]byte{0, 0, 0, 0}, // INADDR_ANY
 	}
 
-    err := windows.Bind(sock, addr)
+	err := windows.Bind(sock, addr)
 	if err != nil {
-        Logger.Error("Error:", err)
+		Logger.Error("Error:", err)
 	}
 
 	// fmt.Print("Listening on UDP port %s\n", recvPort)
@@ -180,7 +177,7 @@ func recv(sock windows.Handle) {
 		)
 		recvData := string(buf[:n])
 
-    	Logger.Info("Received a packet...", "port", recvPort, "addr", recvFromIP, "data_size", n)
+		Logger.Info("Received a packet...", "port", recvPort, "addr", recvFromIP, "data_size", n)
 
 		processRecvData(recvFromIP, recvData)
 	}
@@ -195,19 +192,19 @@ func processRecvData(ip string, data string) {
 
 	if strings.TrimSpace(substrings[0]) == "1" && Settings.AllowSync {
 		// asking for nodes to complete sync
-	    var nodes []string
+		var nodes []string
 		for _, n := range AllNodes {
 			nodes = append(nodes, fmt.Sprintf("%s:%d", n.Addr, n.Port))
 		}
 
-    	Logger.Info("Sending Nodes")
+		Logger.Info("Sending Nodes")
 		SendTo(ip, "n", strings.Join(nodes, ","), "0")
 		return
 	}
 
 	if strings.TrimSpace(substrings[0]) == "n" && len(substrings) > 2 {
 		// receiving nodes, save them
-    	Logger.Info("Receiving Nodes")
+		Logger.Info("Receiving Nodes")
 		for i := 1; i < len(substrings)-1; i++ {
 			values := strings.Split(substrings[i], ":")
 
@@ -220,53 +217,48 @@ func processRecvData(ip string, data string) {
 	}
 }
 
-
-func CheckActive() {
+func SyncNodes() {
 	if Settings.Receiver == false {
-    	Logger.Info("Receiver is disabled")
+		Logger.Info("Receiver is disabled")
 		return
 	}
 
 	Logger.Info("Started Syncing")
-    fmt.Println("Syncing in the background...")
+	fmt.Println("Syncing in the background...")
 
-    // ask all the nodes if they are live
-    for _, n := range AllNodes {
+	// ask all the nodes if they are live
+	for _, n := range AllNodes {
 		send(winSocket, n.Port, n.Addr, "1")
 	}
 }
 
 func RecvFrom() bool {
 	if Settings.Receiver == false {
-    	Logger.Info("Receiver is disabled")
+		Logger.Info("Receiver is disabled")
 
 		CleanupWinsock()
 		return Settings.Receiver
 	}
 
-    Logger.Info("Receiver started at port %d\n", recvPort)
-    go recv(winSocket)
+	Logger.Info("Receiver started at port %d\n", recvPort)
+	go recv(winSocket)
 
-    return Settings.Receiver
+	return Settings.Receiver
 }
 
 func SendTo(dst_addr string, datatype string, data string, sync_flag string) error {
 	// datatype: n for nodes, w for webpages
 	// sync_flag: 1 or 0
-    
-    // fmt.Println("Sending...")
-    payload := datatype + "," + data + "," + sync_flag
+
+	// fmt.Println("Sending...")
+	payload := datatype + "," + data + "," + sync_flag
 
 	send(winSocket, recvPort, dst_addr, payload)
 
 	return nil
 }
 
-
 func CleanupWinsock() {
 	windows.Closesocket(winSocket)
 	windows.WSACleanup()
 }
-
-
-

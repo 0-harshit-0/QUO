@@ -12,7 +12,6 @@ import (
 var recvPort int = 54321
 var conn *net.UDPConn
 
-
 func InitWinsock() {
 	// no-op on non-Windows
 }
@@ -62,8 +61,6 @@ func GetLocalIPs() []string {
 	return ips
 }
 
-
-
 // Create and bind UDP socket
 func createUDPSocket() *net.UDPConn {
 	addr := &net.UDPAddr{
@@ -96,7 +93,7 @@ func send(conn *net.UDPConn, dstPort int, dstAddr string, msg string) {
 
 	_, err := conn.WriteToUDP([]byte(msg), addr)
 	if err != nil {
-		Logger.Error("Send error:", err)
+		Logger.Error("Not able to send packet", "error", err)
 	}
 }
 
@@ -107,7 +104,7 @@ func recv(conn *net.UDPConn) {
 	for {
 		n, addr, err := conn.ReadFromUDP(buf)
 		if err != nil {
-			Logger.Error("Recv error:", err)
+			Logger.Error("Error receiving data", "error", err)
 			return
 		}
 
@@ -137,7 +134,8 @@ func processRecvData(ip string, data string) {
 			nodes = append(nodes, fmt.Sprintf("%s:%d", n.Addr, n.Port))
 		}
 
-		SendTo(ip, "n", strings.Join(nodes, ","), "0")
+		payload := "n" + "," + strings.Join(nodes, ",") + "," + "0"
+		send(conn, recvPort, ip, payload)
 		return
 	}
 
@@ -161,7 +159,23 @@ func processRecvData(ip string, data string) {
 	}
 }
 
-func CheckActive() {
+func RecvFrom() bool {
+	if !Settings.Receiver {
+		fmt.Println("Receiver is disabled")
+		ReceiverStarted = false
+		return false
+	}
+
+	conn = createUDPSocket()
+	go recv(conn)
+
+	Logger.Info("Receiver started", "port", recvPort)
+	ReceiverStarted = true
+
+	return true
+}
+
+func SyncNodes() {
 	if !Settings.Receiver {
 		fmt.Println("Enable the Receiver first")
 		return
@@ -172,27 +186,6 @@ func CheckActive() {
 	for _, n := range AllNodes {
 		send(conn, n.Port, n.Addr, "1")
 	}
-}
-
-func RecvFrom() bool {
-	if !Settings.Receiver {
-		fmt.Println("Receiver is disabled")
-		return false
-	}
-
-	conn = createUDPSocket()
-
-	Logger.Info("Receiver started", "port", recvPort)
-
-	go recv(conn)
-
-	return true
-}
-
-func SendTo(dstAddr string, datatype string, data string, syncFlag string) error {
-	payload := datatype + "," + data + "," + syncFlag
-	send(conn, recvPort, dstAddr, payload)
-	return nil
 }
 
 func Cleanup() {

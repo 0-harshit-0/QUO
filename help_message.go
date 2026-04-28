@@ -1,161 +1,162 @@
 package main
 
 import (
-    "os"
-    "bufio"
-    "fmt"
-    "strings"
-    "strconv"
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
-
 
 var reader = bufio.NewReader(os.Stdin)
 
 func SInput() string {
-    line, err := reader.ReadString('\n')
-    if err != nil {
-        fmt.Println("Error reading input:", err)
-    }
-    return strings.TrimSpace(line)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading input:", err)
+	}
+	return strings.TrimSpace(line)
 }
 
-func NInput() (int) {
-    var input int
-    _, err := fmt.Scanln(&input)
-    if err != nil {
-        fmt.Println("Error reading input:", err)
-        return 0
-    }
+func NInput() int {
+	var input int
+	_, err := fmt.Scanln(&input)
+	if err != nil {
+		fmt.Println("Error reading input:", err)
+		return 0
+	}
 
-    return input
+	return input
 }
 
 func HelpMenu() {
-    msgs := []string{
-        0: "Quit the browser",
-        1: "Browser state",
-        2: "Browser commands",
-        3: "New tab",
-        4: "Switch tab",
-        5: "Close current tab",
-        6: "Search",
-        7: "Close Host",
-        8: "",
-        9: "Sync Nodes",
-        10: "",
-        11: "",
-        "Settings",
-    }
-    PrintInRows(6, msgs)
+	msgs := []string{
+		0:  "Quit the browser",
+		1:  "Browser state",
+		2:  "Browser commands",
+		3:  "New tab",
+		4:  "Switch tab",
+		5:  "Close current tab",
+		6:  "Search",
+		7:  "Close Host",
+		8:  "",
+		9:  "Sync Nodes",
+		10: "",
+		11: "",
+		"Settings",
+	}
+	PrintInRows(6, msgs)
 
-    for {
-        // input
-        fmt.Print("\nEnter command: ")
-        input := NInput()
+	for {
+		// input
+		fmt.Print("\nEnter command: ")
+		input := NInput()
 
-        switch input {
-            case 0:
-                fmt.Println("ta! ta!")
-                QuitBrowser()
-                return
-            case 1:
-                BrowserState()
-            case 2:
-                PrintInRows(6, msgs)
-            case 3:
-                NewTab()
-            case 4:
-                fmt.Println("Available Tabs: ")
-                for _, tab := range Tabs {
-                    if tab.serving {
-                        fmt.Printf("%d - Running a host on %d\n", tab.id, tab.port)
-                    } else {
-                        fmt.Printf("%d - Available\n", tab.id)
-                    }
-                }
+		switch input {
+		case 0:
+			fmt.Println("ta! ta!")
+			QuitBrowser()
+			return
+		case 1:
+			BrowserState()
+		case 2:
+			PrintInRows(6, msgs)
+		case 3:
+			NewTab()
+		case 4:
+			fmt.Println("Available Tabs: ")
+			// show the user if the tab is already serving something. Its still switchable
+			for _, tab := range Tabs {
+				if tab.serving {
+					fmt.Printf("%d - Running a host on %d\n", tab.id, tab.port)
+				} else {
+					fmt.Printf("%d - Available\n", tab.id)
+				}
+			}
 
-                fmt.Print("\nTab Id: ")
-                switchTabID := NInput()
-                SwitchTab(switchTabID)
-            case 5:
-                CloseTab(CurrentTabID)
-            case 6:
-                ReadWebpagesHistory()
-                currentTab := Tabs[CurrentTabID]
-                // if currentTab.serving {
-                //     fmt.Printf("Already serving at port: %d\n", currentTab.port)
-                //     continue
-                // }
+			fmt.Print("\nTab Id: ")
+			switchTabID := NInput()
+			SwitchTab(switchTabID)
+		case 5:
+			CloseTab(CurrentTabID)
+		case 6:
+			ReadWebpagesHistory()
+			currentTab := Tabs[CurrentTabID]
+			// if currentTab.serving {
+			//     fmt.Printf("Already serving at port: %d\n", currentTab.port)
+			//     continue
+			// }
 
-                fmt.Println("Last Visited: ")
-                ListWebpages()
+			fmt.Println("Last Visited: ")
+			ListWebpages()
 
-                searchIndex := 1 // default to first webpage
+			searchIndex := 1 // default to first webpage
 
-                for {
-                    fmt.Print("\nSearch query (use -y {id} to open the page or -n to go back): ")
-                    searchQuery := strings.TrimSpace(SInput())
-                    parts := strings.Fields(searchQuery)
+			for {
+				fmt.Print("\nSearch query (use -y {id} to open the page or -n to go back): ")
+				searchQuery := strings.TrimSpace(SInput())
+				parts := strings.Fields(searchQuery)
 
-                    if len(parts) == 0 {
-                        continue
-                    }
+				if len(parts) == 0 {
+					continue
+				}
 
-                    if strings.HasPrefix(parts[0], "-y") {
-                        if len(parts) > 1 {
-                            n, err := strconv.Atoi(parts[1])
-                            if err != nil {
-                                fmt.Println("invalid number")
-                                continue
-                            }
+				if strings.HasPrefix(parts[0], "-y") {
+					if len(parts) > 1 {
+						n, err := strconv.Atoi(parts[1])
+						if err != nil {
+							fmt.Println("invalid number")
+							continue
+						}
 
-                            searchIndex = n
-                        }
-                        break
-                    }else if strings.HasPrefix(parts[0], "-n") {
-                        searchIndex = 0
-                        break
-                    }
+						searchIndex = n
+					}
+					break
+				} else if strings.HasPrefix(parts[0], "-n") {
+					searchIndex = 0
+					break
+				}
 
-                    SearchWebpagesFolder(searchQuery)
-                    ListWebpages()
-                }
+				// if user did not perform any operation, that means they are searching for something
+				SearchWebpagesFolder(searchQuery)
+				ListWebpages()
+			}
 
-                if searchIndex != 0 {
-                    // this "completed" channel is only to know that the server has opened. Now we can move to different commands
-                    completed := make(chan bool)
+			if searchIndex != 0 {
+				// this "completed" channel is only to know that the server has opened. Now we can move to different commands
+				completed := make(chan bool)
 
-                    // send the query to tab channel
-                    currentTab.command <- Command {
-                        Action: "start_server",
-                        PageIndex:  searchIndex-1,
-                        Completed: completed,
-                    }
+				// send the query to tab channel
+				currentTab.command <- Command{
+					Action:    "start_server",
+					PageIndex: searchIndex - 1,
+					Completed: completed,
+				}
 
-                    <- completed
-                }
-            case 7:
-                CloseHost(Tabs[CurrentTabID])
-            case 9:
-                CheckActive()
-            case len(msgs)-1:
-                ListSettings()
+				<-completed
+			}
+		case 7:
+			CloseHost(Tabs[CurrentTabID])
+		case 9:
+			SyncNodes()
+		case len(msgs) - 1:
+			ListSettings()
 
-                for {
-                    fmt.Print("\nSelect the setting ID to update (0 to go back): ")
-                    settingId := NInput()
+			for {
+				fmt.Print("\nSelect the setting ID to update (0 to go back): ")
+				settingId := NInput()
 
-                    if settingId == 0 {
-                        break
-                    }
+				if settingId == 0 {
+					break
+				}
 
-                    UpdateSetting(settingId)
-                    ListSettings()
-                }
-            default:
-                fmt.Println("Unknown command")
-        }
+				UpdateSetting(settingId)
+				ListSettings()
+			}
+		default:
+			fmt.Println("Unknown command")
+		}
 
-        fmt.Println()
-    }
+		fmt.Println()
+	}
 }

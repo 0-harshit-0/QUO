@@ -1,75 +1,72 @@
 package main
 
 import (
-    "fmt"
-    "strings"
+	"fmt"
+	"strings"
 )
-
-
 
 var Shutdown = make(chan struct{})
 var ConfigDir string = "config"
 var CacheDir string = "cache"
-var RootWebpagesFolder string = "webpages" // root webpages folder
-
-
+var ReceiverStarted bool = false
 
 func BrowserState() {
-    ips := GetLocalIPs()
+	ips := GetLocalIPs()
 
-    fmt.Printf("Current Tab: %d | Total tabs: %d | IP: %v\n", CurrentTabID, len(Tabs), ips)
+	fmt.Printf("Current Tab: %d | Total tabs: %d | IP: %v | Receiver: %t\n", CurrentTabID, len(Tabs), ips, ReceiverStarted)
 }
 func QuitBrowser() {
-    //  When the channel(pipe) is closed, it signals each tab and closes active host. After this it returns and the HelpMessage loop ends which results in the closure of the last goroutine and leads to a graceful shutdown
-    close(Shutdown)
-    Tabs = nil
+	//  When the channel(pipe) is closed, it signals each tab and closes active host.
+	//  After this it returns and the HelpMessage loop ends, which closes of the last goroutine and leads to a graceful shutdown
+	close(Shutdown)
+	Tabs = nil
 }
 
 func main() {
-    _, file, err := NewLogger()
-    if err != nil {
-        panic(err)
-    }
-    defer file.Close()
-    
-    Logger.Info("Starting Browser")
+	_, file, err := NewLogger()
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
-    // start a common winsock for the whole program
-    InitWinsock()
-    defer CleanupWinsock()
-    
-    // initial prints    
-    asciiName := `
+	Logger.Info("Starting Browser")
+
+	// start a common winsock for the whole program
+	InitWinsock()
+	defer CleanupWinsock()
+
+	// initial prints
+	asciiName := `
 ------------------------ __ _ _   _  ___ -------------------------
 ----------------------- / _* | | | |/ _ \ ------------------------
 ---------------------- | (_| | |_| | (_) | -----------------------
 ----------------------- \__, |\__,_|\___/ ------------------------
 -------------------------- |_| -----------------------------------
 `
-    fmt.Println(strings.ReplaceAll(asciiName, "-", " "), "\n")
-    
-    // load settings and files
-    LoadSettings()
-    LoadNodes()
+	fmt.Println(strings.ReplaceAll(asciiName, "-", " "))
 
-    // the quick-sync receiver
-    RecvFrom()
+	// load settings and files
+	LoadSettings()
+	LoadNodes()
 
-    // start the browser, by starting a tab, etc.
-    NewTab()
+	// the quick-sync receiver
+	RecvFrom()
 
-    // show the browser state
-    BrowserState()
-    fmt.Println()
-    
-    // user I/O
-    done := make(chan struct{})
-    go func() {
-        // ReadWebpagesFolder(0, 10)
-        HelpMenu()
-        close(done)
-    }()
-    <- done
+	// start the browser, by starting a tab, etc.
+	NewTab()
 
-    Logger.Info("Closing Browser")
+	// show the browser state
+	BrowserState()
+	fmt.Println()
+
+	// user I/O
+	done := make(chan struct{})
+	go func() {
+		// ReadWebpagesFolder(0, 10)
+		HelpMenu()
+		close(done)
+	}()
+	<-done
+
+	Logger.Info("Closing Browser")
 }

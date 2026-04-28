@@ -1,69 +1,68 @@
 package main
 
 import (
-    "os"
-    "fmt"
-    "strings"
-    "reflect"
-    "encoding/json"
+	"encoding/json"
+	"fmt"
+	"os"
+	"reflect"
+	"strings"
 )
 
-
 type settingsJson struct {
-    Receiver             bool `json:"receiver"`
-    AllowSync            bool `json:"allow_sync"`
+	Receiver  bool `json:"receiver"`
+	AllowSync bool `json:"allow_sync"`
 }
+
 var Settings settingsJson
 
-
 func LoadSettings() {
-    Logger.Info("Loading Settings Config File")
+	Logger.Info("Loading Settings Config File")
 
-    var err error
-    Settings, err = ReadJson[settingsJson](ConfigDir+"/settings.json")
-    if err != nil {
-        Logger.Error("Error:", err)
-        return
-    }
+	var err error
+	Settings, err = ReadJson[settingsJson](ConfigDir + "/settings.json")
+	if err != nil {
+		Logger.Error("Cannot load settings file", "error", err)
+		return
+	}
 }
 
 func ListSettings() {
-    // add a restart flag, this way if user has not restarted we can safely ignore calling other functions or restart automatically
-    fmt.Println("Restart the browser after updating the settings")
+	// add a restart flag, this way if user has not restarted we can safely ignore calling other functions or restart automatically
+	fmt.Println("Restart the browser after updating the settings")
 
-    v := reflect.ValueOf(Settings)
-    t := reflect.TypeOf(Settings)
+	v := reflect.ValueOf(Settings)
+	t := reflect.TypeOf(Settings)
 
-    for i := 0; i < v.NumField(); i++ {
-        // key := t.Field(i).Tag.Get("json")
-        key := strings.ToLower(t.Field(i).Name)
-        value := v.Field(i).Interface()
+	for i := 0; i < v.NumField(); i++ {
+		// key := t.Field(i).Tag.Get("json")
+		key := strings.ToLower(t.Field(i).Name)
+		value := v.Field(i).Interface()
 
-        fmt.Printf("%d - %s --- %v\n", i+1, key, value)
-    }
+		fmt.Printf("%d - %s --- %v\n", i+1, key, value)
+	}
 
-    // fmt.Print(v)
-    // fmt.Print(t)
-    // PrintInRows(3, settings)
+	// fmt.Print(v)
+	// fmt.Print(t)
+	// PrintInRows(3, settings)
 }
 
 func UpdateSetting(id int) error {
-    switch id {
-        case 1:
-            Settings.Receiver = !Settings.Receiver
-        case 2:
-            Settings.AllowSync = !Settings.AllowSync
-        default:
-            fmt.Println("\nInvalid setting\n")
-    }
+	switch id {
+	case 1:
+		Settings.Receiver = !Settings.Receiver
+	case 2:
+		Settings.AllowSync = !Settings.AllowSync
+	default:
+		fmt.Println("\nInvalid setting")
+	}
 
-    Logger.Info("Updating Settings Config File")
+	Logger.Info("Updating Settings Config File")
 
-    data, err := json.MarshalIndent(Settings, "", "  ")
-    if err != nil {
-        Logger.Error("Error:", err)
-        return err
-    }
+	data, err := json.MarshalIndent(Settings, "", "  ")
+	if err != nil {
+		Logger.Error("Settings did not updated", "error", err)
+		return err
+	}
 
-    return os.WriteFile(ConfigDir+"/settings.json", data, 0644)
+	return os.WriteFile(ConfigDir+"/settings.json", data, 0644)
 }

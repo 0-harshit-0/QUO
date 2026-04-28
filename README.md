@@ -38,8 +38,9 @@ A CLI Browser
 
 ### Synchronization
 - It is running in an individual Goroutine. (parent: main)
-- If another browser sends a message starting with "1" then that means they are checking if you are active and like to send the nodes copy you have
+- If another browser sends a message starting with "1" then that means they are checking if you are active and interested in sending the nodes copy you have
 - If the message starts with "n" then it is the list of nodes, ip:port,ip:port...
+- 0 has no use at the moment.
 
 
 ## TO-DO
