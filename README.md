@@ -22,7 +22,7 @@ A CLI Browser
 - It is running in an individual Goroutine. (parent: main)
 
 ### Tabs
-- New tab is like creating new Goroutine. (parent: main)
+- New tab is like creating new Goroutine. (parent: user_input)
 - 1 Tab can only serve 1 webpage at a time.
 - The server that serves the webpage runs in a goroutine. (parent: tab)
 
@@ -34,13 +34,17 @@ A CLI Browser
 	- Use the `Search` option and try searching for the particular webpage.
 
 ### Search
-- It is running in an individual Goroutine. (parent: main)
+- User can search the local webpages and the webpages of the nodes
 
 ### Synchronization
 - It is running in an individual Goroutine. (parent: main)
 - If another browser sends a message starting with "1" then that means they are checking if you are active and interested in sending the nodes copy you have
 - If the message starts with "n" then it is the list of nodes, ip:port,ip:port...
 - 0 has no use at the moment.
+
+### Settings
+- Receiver: if this is off then the browser works offline only. It cannot sync or search external webpages.
+- Allow Sync: if this is off, then even if the receiver is enabled, no will be able to get the copy of your nodes.
 
 
 ## TO-DO

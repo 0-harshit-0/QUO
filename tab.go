@@ -25,7 +25,7 @@ type tab struct {
 var Tabs = make(map[int]*tab)
 var CurrentTabID int = 0 // 0 id means theres no tab
 var newTabID int = 1
-var portToUse uint16 = 49152
+var portToUse uint16 = 49153
 
 const maxPort = 65535
 

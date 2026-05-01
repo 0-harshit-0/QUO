@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var recvPort int = 54321
+var recvPort int = 49152
 var conn *net.UDPConn
 
 func InitWinsock() {

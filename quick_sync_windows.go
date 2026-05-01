@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var recvPort int = 54321
+var recvPort int = 49152
 
 var winSocket windows.Handle = createUDPSocket()
 
