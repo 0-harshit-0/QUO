@@ -31,10 +31,6 @@ func main() {
 
 	Logger.Info("Starting Browser")
 
-	// start a common winsock for the whole program
-	InitWinsock()
-	defer CleanupWinsock()
-
 	// initial prints
 	asciiName := `
 ------------------------ __ _ _   _  ___ -------------------------
