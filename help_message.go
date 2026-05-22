@@ -32,16 +32,16 @@ func NInput() int {
 func HelpMenu() {
 	msgs := []string{
 		0:  "Quit the browser",
-		1:  "Browser state",
-		2:  "Browser commands",
+		1:  "Browser commands",
+		2:  "Browser state",
 		3:  "New tab",
 		4:  "Switch tab",
 		5:  "Close current tab",
 		6:  "Search",
-		7:  "Close Host",
+		7:  "Close Webpage",
 		8:  "",
 		9:  "Sync Nodes",
-		10: "",
+		10: "Refresh Node List",
 		11: "",
 		"Settings",
 	}
@@ -52,15 +52,17 @@ func HelpMenu() {
 		fmt.Print("\nEnter command: ")
 		input := NInput()
 
+		Logger.Info("Input command", "command", input)
+
 		switch input {
 		case 0:
 			fmt.Println("ta! ta!")
 			QuitBrowser()
 			return
 		case 1:
-			BrowserState()
-		case 2:
 			PrintInRows(6, msgs)
+		case 2:
+			BrowserState()
 		case 3:
 			NewTab()
 		case 4:
@@ -138,7 +140,11 @@ func HelpMenu() {
 		case 7:
 			CloseHost(Tabs[CurrentTabID])
 		case 9:
-			SyncNodes()
+			// check if nodes are alive and update the webpages list
+			// SyncNodes()
+		case 10:
+			LoadNodes()
+			fmt.Printf("\n%d Nodes found", len(AllNodes))
 		case len(msgs) - 1:
 			ListSettings()
 

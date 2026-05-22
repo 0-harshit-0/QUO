@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	// "strconv"
 	"net/http"
@@ -41,6 +39,8 @@ func (t *tab) run() {
 			}
 			switch cmd.Action {
 			case "start_server":
+				Logger.Info("Open New Webpage")
+
 				// id, err := strconv.Atoi(cmd.Query)
 				// if err != nil {
 				//     fmt.Println("\nInvalid folder id\n")
@@ -48,7 +48,8 @@ func (t *tab) run() {
 				// }
 
 				if cmd.PageIndex < 0 || cmd.PageIndex > len(Webpages) || len(Webpages) == 0 {
-					fmt.Println("\nWebpage not found")
+					Logger.Error("Webpage not found")
+					fmt.Println("Webpage not found")
 					cmd.Completed <- true
 					continue
 				}
@@ -65,10 +66,11 @@ func (t *tab) run() {
 
 				srv, err := Host(Webpages[cmd.PageIndex].Path, Webpages[cmd.PageIndex].Name, t.port)
 				if err != nil {
-					Logger.Error("Something went wrong while serving", "error", err)
+					fmt.Println(err)
 					cmd.Completed <- true
 					continue
 				}
+
 				t.server = srv
 				t.serving = true
 
@@ -90,8 +92,11 @@ func (t *tab) run() {
 }
 
 func NewTab() {
+	Logger.Info("Opening New tab", "tab", newTabID)
+
 	// extra check
 	if portToUse > maxPort {
+		Logger.Error("Ran out of ports")
 		panic("ran out of available ports")
 	}
 
@@ -107,38 +112,22 @@ func NewTab() {
 
 	// switch the tab
 	SwitchTab(tab.id)
-	Logger.Info("New tab opened", "tab", tab.id)
+	// Logger.Info("New tab opened", "tab", tab.id)
 
 	newTabID++
 	portToUse++
 }
 
 func SwitchTab(id int) {
+	Logger.Info("Switching to", "tab", id)
+
 	_, ok := Tabs[id]
 	if ok {
 		CurrentTabID = id
-		Logger.Info("Switched to", "tab", CurrentTabID)
+		// Logger.Info("Switched to", "tab", CurrentTabID)
 	} else {
 		Logger.Error("Tab does not exist")
 		fmt.Println("Tab does not exist")
-	}
-}
-
-func CloseHost(t *tab) {
-	if t.serving == true {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
-		err := t.server.Shutdown(ctx)
-		if err != nil {
-			Logger.Error("trouble shutting down", "error", err)
-		}
-
-		cancel() // defer it for gracefullness
-		Logger.Info("Closing", "port", t.port)
-
-		// reset
-		t.server = nil
-		t.serving = false
 	}
 }
 
@@ -155,8 +144,8 @@ func CloseTab(id int) {
 		delete(Tabs, id)
 
 		if len(Tabs) == 0 {
-			Logger.Info("All tabs closed")
 			CurrentTabID = 0
+			Logger.Info("All tabs closed")
 			return
 		}
 
@@ -167,6 +156,7 @@ func CloseTab(id int) {
 			break
 		}
 	} else {
+		Logger.Info("No tab to close")
 		fmt.Println("No tab to close or something went wrong")
 	}
 }

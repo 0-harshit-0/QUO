@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
 )
 
 type settingsJson struct {
 	Receiver  bool `json:"receiver"`
 	AllowSync bool `json:"allow_sync"`
+	UseTempIP6 bool `json:"use_temp_ip6"`
 }
 
+// user should not update the JSON directly. Even if they do, only refresh it on broser start
 var Settings settingsJson
 
 func LoadSettings() {
@@ -35,7 +36,7 @@ func ListSettings() {
 
 	for i := 0; i < v.NumField(); i++ {
 		// key := t.Field(i).Tag.Get("json")
-		key := strings.ToLower(t.Field(i).Name)
+		key := t.Field(i).Name
 		value := v.Field(i).Interface()
 
 		fmt.Printf("%d - %s --- %v\n", i+1, key, value)
@@ -47,16 +48,18 @@ func ListSettings() {
 }
 
 func UpdateSetting(id int) error {
+	Logger.Info("Updating Settings Config File")
+
 	switch id {
 	case 1:
 		Settings.Receiver = !Settings.Receiver
 	case 2:
 		Settings.AllowSync = !Settings.AllowSync
+	case 3:
+		Settings.UseTempIP6 = !Settings.UseTempIP6
 	default:
 		fmt.Println("\nInvalid setting")
 	}
-
-	Logger.Info("Updating Settings Config File")
 
 	data, err := json.MarshalIndent(Settings, "", "  ")
 	if err != nil {
@@ -64,5 +67,6 @@ func UpdateSetting(id int) error {
 		return err
 	}
 
+	// Logger.Info("Saved the Updated Settings Config File")
 	return os.WriteFile(ConfigDir+"/settings.json", data, 0644)
 }

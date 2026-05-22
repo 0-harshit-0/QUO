@@ -18,14 +18,19 @@ type webpageFolder struct {
 	UpdatedAt time.Time
 }
 
+// user can update the JSON manually. No need to restart the browser
 var RootWebpagesFolder string = "webpages" // root webpages folder
 var Webpages = make([]*webpageFolder, 0, 9)
 
-func LoadWebpages() ([]string, error) {
+// NOT USED ANYWHERE FOR NOW
+func LoadWebpagesFolder() ([]string, error) {
+	Logger.Info("Loading Webpages Folder")
+
 	var webpagesName []string
 
 	entries, err := os.ReadDir(RootWebpagesFolder)
 	if err != nil {
+		Logger.Error("Cannot read webpages folder", "error", err)
 		return nil, err
 	}
 
@@ -39,33 +44,13 @@ func LoadWebpages() ([]string, error) {
 	return webpagesName, nil
 }
 
-// save and load folder_name, and then use that names to load them in Webpages
-func ReadWebpagesHistory() {
-	// Define a slice to hold the data
-	history, err := ReadJson[[]string](CacheDir + "/history.json")
-	if err != nil {
-		return
-	}
-
-	id := 1
-	Webpages = Webpages[:0]
-	for _, entry := range history {
-		path := filepath.Join(RootWebpagesFolder, entry)
-		// fmt.Println(entry, path)
-		Webpages = append(Webpages, &webpageFolder{
-			ID:        id,
-			Name:      entry,
-			Path:      path,
-			UpdatedAt: time.Now(), // needs to be updated and fixed
-		})
-		id++
-	}
-}
-
 func SearchWebpagesFolder(search string) {
+	Logger.Info("Searching Webpages Folder")
+
 	//start int, limit int
 	entries, err := os.ReadDir(RootWebpagesFolder)
 	if err != nil {
+		Logger.Error("Cannot read webpages folder", "error", err)
 		panic(err)
 	}
 
@@ -82,6 +67,7 @@ func SearchWebpagesFolder(search string) {
 
 			info, err := os.Stat(path)
 			if err != nil {
+				Logger.Error("No stat", "error", err)
 				continue
 			}
 
@@ -100,11 +86,40 @@ func SearchWebpagesFolder(search string) {
 	}
 }
 
+// save and load folder_name, and then use that names to load them in Webpages
+func ReadWebpagesHistory() {
+	Logger.Info("Loading Webpages History File")
+
+	// Define a slice to hold the data
+	history, err := ReadJson[[]string](CacheDir + "/history.json")
+	if err != nil {
+		Logger.Error("Error Loading Webpages History File", "error", err)
+		return
+	}
+
+	id := 1
+	Webpages = Webpages[:0]
+	for _, entry := range history {
+		path := filepath.Join(RootWebpagesFolder, entry)
+		// fmt.Println(entry, path)
+		Webpages = append(Webpages, &webpageFolder{
+			ID:        id,
+			Name:      entry,
+			Path:      path,
+			UpdatedAt: time.Now(), // needs to be updated and fixed
+		})
+		id++
+	}
+}
+
 func UpdateHistory(name string) error {
+	Logger.Info("Updating webpages history")
+
 	path := CacheDir + "/history.json"
 
 	history, err := ReadJson[[]string](path)
 	if err != nil {
+		Logger.Error("Cannot webpages history", "error", err)
 		return err
 	}
 
@@ -117,10 +132,11 @@ func UpdateHistory(name string) error {
 	// write back to file
 	out, err := json.MarshalIndent(history, "", "  ")
 	if err != nil {
+		Logger.Error("Cannot update webpages history", "error", err)
 		return err
 	}
 
-	Logger.Info("Update webpages history")
+	// Logger.Info("Update webpages history")
 	return os.WriteFile(path, out, 0644)
 }
 

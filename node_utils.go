@@ -11,10 +11,13 @@ type nodeJson struct {
 	CheckedCount int    `json:"checked_count"`
 }
 
+// user can update the JSON manually. No need to restart the browser
 var AllNodes []nodeJson
 
 func LoadNodes() {
 	Logger.Info("Loading Nodes Config File")
+
+	AllNodes = AllNodes[:0]
 
 	nodes, err := ReadJson[[]nodeJson](ConfigDir + "/nodes.json")
 	if err != nil {
@@ -32,6 +35,8 @@ func LoadNodes() {
 }
 
 func UpdateNodes(ip string, port int) {
+	Logger.Info("Updating node")
+
 	newNode := nodeJson{
 		Addr:         ip,
 		Port:         port,
@@ -42,6 +47,7 @@ func UpdateNodes(ip string, port int) {
 }
 
 func SaveNodes() {
+	Logger.Info("Saving nodes")
 	path := ConfigDir + "/nodes.json"
 
 	// write back to file
@@ -51,6 +57,5 @@ func SaveNodes() {
 		return
 	}
 
-	Logger.Info("Saving nodes")
 	os.WriteFile(path, out, 0644)
 }

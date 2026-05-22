@@ -11,9 +11,13 @@ var CacheDir string = "cache"
 var ReceiverStarted bool = false
 
 func BrowserState() {
-	ips := GetLocalIPs()
+	ip, err := GetIPToUse()
+	if err != nil {
+		fmt.Printf("Error getting addresses: %v\n", err)
+		return
+	}
 
-	fmt.Printf("Current Tab: %d | Total tabs: %d | IP: %v | Receiver: %t\n", CurrentTabID, len(Tabs), ips, ReceiverStarted)
+	fmt.Printf("Current Tab: %d | Total tabs: %d | IP: %v | Receiver Started: %t | Nodes: %d\n", CurrentTabID, len(Tabs), ip, ReceiverStarted, len(AllNodes))
 }
 func QuitBrowser() {
 	//  When the channel(pipe) is closed, it signals each tab and closes active host.
@@ -32,8 +36,7 @@ func main() {
 	Logger.Info("Starting Browser")
 
 	// initial prints
-	asciiName := `
------------------------- __ _ _   _  ___ -------------------------
+	asciiName := `------------------------ __ _ _   _  ___ -------------------------
 ----------------------- / _* | | | |/ _ \ ------------------------
 ---------------------- | (_| | |_| | (_) | -----------------------
 ----------------------- \__, |\__,_|\___/ ------------------------
@@ -46,7 +49,7 @@ func main() {
 	LoadNodes()
 
 	// the quick-sync receiver
-	RecvFrom()
+	// RecvFrom()
 
 	// start the browser, by starting a tab, etc.
 	NewTab()

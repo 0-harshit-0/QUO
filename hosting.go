@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"time"
 	"fmt"
 	"net"
 	"net/http"
@@ -8,6 +10,8 @@ import (
 )
 
 func Host(path string, name string, port uint16) (*http.Server, error) {
+	Logger.Info("Starting Server")
+
 	info, err := os.Stat(path)
 	if err != nil {
 		Logger.Error("Trouble staring the Host", "error", err)
@@ -43,4 +47,21 @@ func Host(path string, name string, port uint16) (*http.Server, error) {
 	}()
 
 	return srv, nil
+}
+func CloseHost(t *tab) {
+	if t.serving == true {
+		Logger.Info("Closing", "port", t.port)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+		err := t.server.Shutdown(ctx)
+		if err != nil {
+			Logger.Error("trouble shutting down", "error", err)
+		}
+
+		cancel() // defer it for gracefullness
+
+		// reset
+		t.server = nil
+		t.serving = false
+	}
 }
