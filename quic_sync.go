@@ -1,11 +1,19 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
 	"net"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 var recvPort int = 49152
@@ -83,4 +91,62 @@ func GetIPToUse() (string, error) {
 
 	Logger.Error("Temporary IPv6 Not Found. Either enable that or change the browser setting and restart.")
 	return "", errors.New("Temporary IPv6 Not Found. Either enable that or change the browser setting and restart.")
+}
+
+func generateTLSCert() (*tls.Config, error) {
+	// self-signed TLS certificate for QUIC (QUIC requires TLS 1.3)
+	// not for production use
+	Logger.Info("Generating Certificate")
+
+	// Generate an RSA private key
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		Logger.Error("Failed to generate private key", "error", err)
+		return nil, fmt.Errorf("failed to generate private key: %w", err)
+	}
+
+	// Define the certificate template and create certificate
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"QUO In-Memory Temporary Cert"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(24 * time.Hour), // Valid for 24 hours
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		Logger.Error("Failed to create certificate", "error", err)
+		return nil, fmt.Errorf("failed to create certificate: %w", err)
+	}
+
+	// Encode the certificate and key into PEM format and load it in-memory
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
+
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		Logger.Error("Failed to load x509 key pair", "error", err)
+		return nil, fmt.Errorf("failed to load x509 key pair: %w", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}, nil
+}
+
+func RecvFrom() bool {
+	if !Settings.Receiver {
+		Logger.Info("Receiver is disabled")
+		fmt.Println("Receiver is disabled")
+		ReceiverStarted = false
+		return false
+	}
+
+	Logger.Info("Starting Receiver")
+
 }

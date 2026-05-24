@@ -17,7 +17,7 @@ func BrowserState() {
 		return
 	}
 
-	fmt.Printf("Current Tab: %d | Total tabs: %d | IP: %v | Receiver Started: %t | Nodes: %d\n", CurrentTabID, len(Tabs), ip, ReceiverStarted, len(AllNodes))
+	fmt.Printf("Current Tab: %d | Total tabs: %d | Current IP: %v | Receiver Started: %t | Nodes: %d\n", CurrentTabID, len(Tabs), ip, ReceiverStarted, len(AllNodes))
 }
 func QuitBrowser() {
 	//  When the channel(pipe) is closed, it signals each tab and closes active host.

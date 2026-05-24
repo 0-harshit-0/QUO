@@ -1,6 +1,6 @@
 # QUO
 
-A CLI Browser
+A Decentralized CLI Browser Concept
 
 
 ## USAGE
