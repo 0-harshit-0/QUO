@@ -16,6 +16,7 @@ A Decentralized CLI Browser Concept
 ## Concepts
 
 ### Browser
+- Running in the main thread
 - Shutdown channel is the global channel that shutsdown all the tab. The command channel is local channel that only has access to a particular tab
 
 ### User Input
@@ -41,6 +42,7 @@ A Decentralized CLI Browser Concept
 - If another browser sends a message starting with "1" then that means they are checking if you are active and interested in sending the nodes copy you have
 - If the message starts with "n" then it is the list of nodes, ip:port,ip:port...
 - 0 has no use at the moment.
+- https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes | sysctl -w kern.ipc.maxsockbuf=8441037
 
 ### Settings
 - Receiver: if this is off then the browser works offline only. It cannot sync or search external webpages.
@@ -49,6 +51,6 @@ A Decentralized CLI Browser Concept
 
 ## TO-DO
 
-- Implement QUIC
 - Clean variables like `Webpages` after user goes back to main user input.
 - anyone can send nodes, without limit. add some rate limit to receiving nodes and the receivers.
+- HTML Parser

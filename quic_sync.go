@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -9,11 +10,14 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/quic-go/quic-go"
 )
 
 var recvPort int = 49152
@@ -93,7 +97,7 @@ func GetIPToUse() (string, error) {
 	return "", errors.New("Temporary IPv6 Not Found. Either enable that or change the browser setting and restart.")
 }
 
-func generateTLSCert() (*tls.Config, error) {
+func generateTLSConfig() (*tls.Config, error) {
 	// self-signed TLS certificate for QUIC (QUIC requires TLS 1.3)
 	// not for production use
 	Logger.Info("Generating Certificate")
@@ -136,17 +140,80 @@ func generateTLSCert() (*tls.Config, error) {
 
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{"quic-echo-example"},
 	}, nil
 }
 
-func RecvFrom() bool {
+func recv(listener *quic.Listener) {
+	for {
+		// Accept connection: This blocks until the QUIC/TLS handshake finishes
+		conn, err := listener.Accept(context.Background())
+		if err != nil {
+			Logger.Error("Listener did not accept connection", "error", err)
+			continue
+		}
+
+		Logger.Info("New connection made")
+
+		// Pass the established connection to a handler
+		go handleConn(conn)
+	}
+}
+func handleConn(conn *quic.Conn) {
+	for {
+		stream, err := conn.AcceptStream(context.Background())
+		if err != nil {
+			var appErr *quic.ApplicationError
+			if errors.As(err, &appErr) {
+				Logger.Info("Client closed connection", "code", appErr.ErrorCode)
+				return
+			}
+			Logger.Error("Failed to accept stream", "error", err)
+			return
+		}
+		defer stream.Close()
+
+		Logger.Info("New stream accepted")
+
+		buf := make([]byte, 1024)
+		n, err := stream.Read(buf)
+		if err != nil && err != io.EOF {
+			Logger.Error("Read error", "error", err)
+			return
+		}
+
+		Logger.Info("Received data successfully!", "content", string(buf[:n]))
+
+		// Send ack so the client knows it's safe to close
+		_, err = stream.Write([]byte("ACK"))
+		if err != nil {
+			Logger.Error("Write ack error", "error", err)
+		}
+	}
+}
+
+func Receiver() {
 	if !Settings.Receiver {
 		Logger.Info("Receiver is disabled")
 		fmt.Println("Receiver is disabled")
 		ReceiverStarted = false
-		return false
+		return
 	}
 
-	Logger.Info("Starting Receiver")
+	Logger.Info("Starting Receiver", "port", recvPort)
 
+	// Generate standard TLS configuration required by QUIC
+	tlsConfig, err := generateTLSConfig()
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// Start the QUIC Listener on a UDP port
+	listener, err := quic.ListenAddr("localhost:49152", tlsConfig, nil)
+	if err != nil {
+		Logger.Error("Listener did not initialize", "error", err)
+		fmt.Print(err)
+	}
+
+	go recv(listener)
 }
