@@ -112,6 +112,7 @@ func NewTab() {
 
 	// switch the tab
 	SwitchTab(tab.id)
+
 	// Logger.Info("New tab opened", "tab", tab.id)
 
 	newTabID++
@@ -124,6 +125,7 @@ func SwitchTab(id int) {
 	_, ok := Tabs[id]
 	if ok {
 		CurrentTabID = id
+		// fmt.Printf("\nSwitched to tab: %d", CurrentTabID)
 		// Logger.Info("Switched to", "tab", CurrentTabID)
 	} else {
 		Logger.Error("Tab does not exist")

@@ -4,11 +4,24 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 )
 
 var reader = bufio.NewReader(os.Stdin)
+
+func clearScreen() {
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", "cls")
+	} else {
+		cmd = exec.Command("clear")
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
 
 func SInput() string {
 	line, err := reader.ReadString('\n')
@@ -51,6 +64,8 @@ func HelpMenu() {
 		// input
 		fmt.Print("\nEnter command: ")
 		input := NInput()
+
+		clearScreen()
 
 		Logger.Info("Input command", "command", input)
 

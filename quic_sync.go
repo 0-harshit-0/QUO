@@ -55,7 +55,7 @@ func GetAllIPs() {
 
 			fmt.Printf("  -> IP Address: %s | MASK: %s\n", addr.String(), ipNet.Mask)
 		}
-		fmt.Println() // Empty line for readability
+		fmt.Println()
 	}
 }
 
@@ -145,6 +145,11 @@ func generateTLSConfig() (*tls.Config, error) {
 	}, nil
 }
 
+// sender utilities
+func send(ip string, payload string) {
+
+}
+
 // receiver utilities
 func recv(listener *quic.Listener) {
 	for {
@@ -210,8 +215,8 @@ func processRecvData(ip string, data string) {
 			nodes = append(nodes, fmt.Sprintf("%s:%d", n.Addr, n.Port))
 		}
 
-		// payload := "n" + "," + strings.Join(nodes, ",") + "," + "0"
-		// send(recvPort, ip, payload)
+		payload := "n" + "," + strings.Join(nodes, ",") + "," + "0"
+		send(ip, payload)
 
 		return
 	}
@@ -238,12 +243,10 @@ func processRecvData(ip string, data string) {
 	}
 }
 
-// sender utilities
-
 func Receiver() {
-	if !Settings.Receiver {
-		Logger.Info("Receiver is disabled")
-		fmt.Println("Receiver is disabled")
+	if !Settings.Sync {
+		Logger.Info("Sync is disabled")
+		fmt.Println("Sync is disabled")
 		ReceiverStarted = false
 		return
 	}
@@ -256,8 +259,20 @@ func Receiver() {
 		fmt.Print(err)
 	}
 
-	// Start the QUIC Listener on a UDP port
-	listener, err := quic.ListenAddr("localhost:49152", tlsConfig, nil)
+	// setup single UDP transport
+	udpConn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: recvPort})
+	if err != nil {
+		Logger.Error("Transport did not initialize", "error", err)
+		fmt.Print(err)
+	}
+
+	tr := quic.Transport{
+		Conn: udpConn,
+	}
+
+	// Start the QUIC Listener
+	listener, err := tr.Listen(tlsConfig, nil)
+	// listener, err := quic.ListenAddr("localhost:49152", tlsConfig, nil)
 	if err != nil {
 		Logger.Error("Listener did not initialize", "error", err)
 		fmt.Print(err)
