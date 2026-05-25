@@ -13,6 +13,7 @@ type nodeJson struct {
 
 // user can update the JSON manually. No need to restart the browser
 var AllNodes []nodeJson
+var nodesToSave []nodeJson
 
 func LoadNodes() {
 	Logger.Info("Loading Nodes Config File")
@@ -43,7 +44,7 @@ func UpdateNodes(ip string, port int) {
 		CheckedCount: 0,
 	}
 
-	AllNodes = append(AllNodes, newNode)
+	nodesToSave = append(nodesToSave, newNode)
 }
 
 func SaveNodes() {
@@ -51,11 +52,12 @@ func SaveNodes() {
 	path := ConfigDir + "/nodes.json"
 
 	// write back to file
-	out, err := json.MarshalIndent(AllNodes, "", "  ")
+	out, err := json.MarshalIndent(nodesToSave, "", "  ")
 	if err != nil {
 		Logger.Error("Error saving nodes", "error", err)
 		return
 	}
 
 	os.WriteFile(path, out, 0644)
+	nodesToSave = nodesToSave[:0]
 }

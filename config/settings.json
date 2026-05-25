@@ -1,5 +1,5 @@
 {
-  "receiver": true,
+  "receiver": false,
   "allow_sync": true,
   "use_temp_ip6": true
 }

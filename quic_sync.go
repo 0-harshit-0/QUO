@@ -14,6 +14,7 @@ import (
 	"math/big"
 	"net"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -144,6 +145,7 @@ func generateTLSConfig() (*tls.Config, error) {
 	}, nil
 }
 
+// receiver utilities
 func recv(listener *quic.Listener) {
 	for {
 		// Accept connection: This blocks until the QUIC/TLS handshake finishes
@@ -182,7 +184,8 @@ func handleConn(conn *quic.Conn) {
 			return
 		}
 
-		Logger.Info("Received data successfully!", "content", string(buf[:n]))
+		Logger.Info("Received data successfully! Now Processing...")
+		processRecvData(conn.RemoteAddr().String(), string(buf[:n]))
 
 		// Send ack so the client knows it's safe to close
 		_, err = stream.Write([]byte("ACK"))
@@ -191,6 +194,51 @@ func handleConn(conn *quic.Conn) {
 		}
 	}
 }
+func processRecvData(ip string, data string) {
+	substrings := strings.Split(data, ",")
+
+	if len(substrings) == 0 {
+		return
+	}
+
+	// if sync not allowed the client side will get no connection error(alive but not interested in sharing) and no data
+	if strings.TrimSpace(substrings[0]) == "1" && Settings.AllowSync {
+		Logger.Info("Sending Nodes", "client IP", ip)
+
+		var nodes []string
+		for _, n := range AllNodes {
+			nodes = append(nodes, fmt.Sprintf("%s:%d", n.Addr, n.Port))
+		}
+
+		// payload := "n" + "," + strings.Join(nodes, ",") + "," + "0"
+		// send(recvPort, ip, payload)
+
+		return
+	}
+
+	if strings.TrimSpace(substrings[0]) == "n" && len(substrings) > 2 {
+		Logger.Info("Receiving Nodes", "client IP", ip)
+
+		for i := 1; i < len(substrings); i++ {
+			values := strings.Split(substrings[i], ":")
+
+			if len(values) != 2 {
+				continue
+			}
+
+			port, err := strconv.Atoi(values[1])
+			if err != nil {
+				continue
+			}
+
+			UpdateNodes(values[0], port)
+		}
+
+		SaveNodes()
+	}
+}
+
+// sender utilities
 
 func Receiver() {
 	if !Settings.Receiver {
