@@ -8,9 +8,10 @@ import (
 )
 
 type settingsJson struct {
-	Receiver  bool `json:"receiver"`
-	AllowSync bool `json:"allow_sync"`
-	UseTempIP6 bool `json:"use_temp_ip6"`
+	Sync         bool `json:"sync"`
+	SendNodes    bool `json:"send_nodes"`
+	ReceiveNodes bool `json:"receive_nodes"`
+	UseTempIP6   bool `json:"use_temp_ip6"`
 }
 
 // user should not update the JSON directly. Even if they do, only refresh it on broser start
@@ -52,10 +53,12 @@ func UpdateSetting(id int) error {
 
 	switch id {
 	case 1:
-		Settings.Receiver = !Settings.Receiver
+		Settings.Sync = !Settings.Sync
 	case 2:
-		Settings.AllowSync = !Settings.AllowSync
+		Settings.SendNodes = !Settings.SendNodes
 	case 3:
+		Settings.ReceiveNodes = !Settings.ReceiveNodes
+	case 4:
 		Settings.UseTempIP6 = !Settings.UseTempIP6
 	default:
 		fmt.Println("\nInvalid setting")

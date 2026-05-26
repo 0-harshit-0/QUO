@@ -22,6 +22,7 @@ import (
 )
 
 var recvPort int = 49152
+var tr *quic.Transport = nil
 
 // all the local IPs
 func GetAllIPs() {
@@ -58,7 +59,6 @@ func GetAllIPs() {
 		fmt.Println()
 	}
 }
-
 func GetIPToUse() (string, error) {
 	Logger.Info("Finding temporary IPv6")
 
@@ -96,6 +96,25 @@ func GetIPToUse() (string, error) {
 
 	Logger.Error("Temporary IPv6 Not Found. Either enable that or change the browser setting and restart.")
 	return "", errors.New("Temporary IPv6 Not Found. Either enable that or change the browser setting and restart.")
+}
+
+func CreateTransport() {
+	if !Settings.Sync {
+		Logger.Info("Sync is disabled")
+		fmt.Println("Sync is disabled")
+		return
+	}
+
+	// setup single UDP transport
+	udpConn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: recvPort})
+	if err != nil {
+		Logger.Error("Transport did not initialize", "error", err)
+		fmt.Print(err)
+	}
+
+	tr = &quic.Transport{
+		Conn: udpConn,
+	}
 }
 
 func generateTLSConfig() (*tls.Config, error) {
@@ -146,9 +165,7 @@ func generateTLSConfig() (*tls.Config, error) {
 }
 
 // sender utilities
-func send(ip string, payload string) {
-
-}
+func send(ip string, payload string) {}
 
 // receiver utilities
 func recv(listener *quic.Listener) {
@@ -207,7 +224,7 @@ func processRecvData(ip string, data string) {
 	}
 
 	// if sync not allowed the client side will get no connection error(alive but not interested in sharing) and no data
-	if strings.TrimSpace(substrings[0]) == "1" && Settings.AllowSync {
+	if strings.TrimSpace(substrings[0]) == "1" && Settings.SendNodes {
 		Logger.Info("Sending Nodes", "client IP", ip)
 
 		var nodes []string
@@ -221,7 +238,7 @@ func processRecvData(ip string, data string) {
 		return
 	}
 
-	if strings.TrimSpace(substrings[0]) == "n" && len(substrings) > 2 {
+	if strings.TrimSpace(substrings[0]) == "n" && len(substrings) > 2 && Settings.ReceiveNodes {
 		Logger.Info("Receiving Nodes", "client IP", ip)
 
 		for i := 1; i < len(substrings); i++ {
@@ -244,9 +261,7 @@ func processRecvData(ip string, data string) {
 }
 
 func Receiver() {
-	if !Settings.Sync {
-		Logger.Info("Sync is disabled")
-		fmt.Println("Sync is disabled")
+	if tr == nil {
 		ReceiverStarted = false
 		return
 	}
@@ -259,17 +274,6 @@ func Receiver() {
 		fmt.Print(err)
 	}
 
-	// setup single UDP transport
-	udpConn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: recvPort})
-	if err != nil {
-		Logger.Error("Transport did not initialize", "error", err)
-		fmt.Print(err)
-	}
-
-	tr := quic.Transport{
-		Conn: udpConn,
-	}
-
 	// Start the QUIC Listener
 	listener, err := tr.Listen(tlsConfig, nil)
 	// listener, err := quic.ListenAddr("localhost:49152", tlsConfig, nil)
@@ -278,5 +282,6 @@ func Receiver() {
 		fmt.Print(err)
 	}
 
+	ReceiverStarted = true
 	go recv(listener)
 }

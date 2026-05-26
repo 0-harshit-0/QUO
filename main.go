@@ -48,7 +48,8 @@ func main() {
 	LoadSettings()
 	LoadNodes()
 
-	// the quick-sync receiver
+	// the quick-sync
+	CreateTransport()
 	Receiver()
 
 	// start the browser, by starting a tab, etc.
