@@ -1,6 +1,6 @@
 {
   "sync": true,
-  "send_nodes": true,
+  "send_nodes": false,
   "receive_nodes": true,
   "use_temp_ip6": true
 }

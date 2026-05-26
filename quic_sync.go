@@ -117,7 +117,7 @@ func CreateTransport() {
 	}
 }
 
-func generateTLSConfig() (*tls.Config, error) {
+func generateServerTLSConfig() (*tls.Config, error) {
 	// self-signed TLS certificate for QUIC (QUIC requires TLS 1.3)
 	// not for production use
 	Logger.Info("Generating Certificate")
@@ -163,9 +163,40 @@ func generateTLSConfig() (*tls.Config, error) {
 		NextProtos:   []string{"quic-echo-example"},
 	}, nil
 }
+func generateClientTLSConfig() *tls.Config {
+	return &tls.Config{
+		NextProtos: []string{"quic-echo-example"},
+
+		// InSecureSkipVerify is required for self-signed development certs
+		// WARNING: Do not use this in production!
+		InsecureSkipVerify: true,
+	}
+}
 
 // sender utilities
-func send(ip string, payload string) {}
+func send(stream *quic.Stream, payload string) {
+	_, err := stream.Write([]byte(payload))
+	if err != nil {
+		Logger.Error("Write error", "error", err)
+	}
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
+	// defer cancel()
+
+	// tlsConfig := generateClientTLSConfig()
+
+	// conn, err := tr.Dial(ctx, ip, tlsConfig, nil)
+	// if err != nil {
+	// 	Logger.Error("Dialer did not initialize", "error", err)
+	// 	fmt.Print(err)
+	// }
+
+	// stream, err := conn.OpenStream()
+	// if err != nil {
+	// 	Logger.Error("Stream did not open", "error", err)
+	// 	fmt.Print(err)
+	// }
+}
 
 // receiver utilities
 func recv(listener *quic.Listener) {
@@ -207,16 +238,16 @@ func handleConn(conn *quic.Conn) {
 		}
 
 		Logger.Info("Received data successfully! Now Processing...")
-		processRecvData(conn.RemoteAddr().String(), string(buf[:n]))
+		processRecvData(conn.RemoteAddr(), stream, string(buf[:n]))
 
-		// Send ack so the client knows it's safe to close
-		_, err = stream.Write([]byte("ACK"))
-		if err != nil {
-			Logger.Error("Write ack error", "error", err)
-		}
+		// // Send ack so the client knows it's safe to close
+		// _, err = stream.Write([]byte("ACK"))
+		// if err != nil {
+		// 	Logger.Error("Write ack error", "error", err)
+		// }
 	}
 }
-func processRecvData(ip string, data string) {
+func processRecvData(ip net.Addr, steam *quic.Stream, data string) {
 	substrings := strings.Split(data, ",")
 
 	if len(substrings) == 0 {
@@ -233,7 +264,8 @@ func processRecvData(ip string, data string) {
 		}
 
 		payload := "n" + "," + strings.Join(nodes, ",") + "," + "0"
-		send(ip, payload)
+		Logger.Info("Nodes", "nodes", payload)
+		send(steam, payload)
 
 		return
 	}
@@ -269,7 +301,7 @@ func Receiver() {
 	Logger.Info("Starting Receiver", "port", recvPort)
 
 	// Generate standard TLS configuration required by QUIC
-	tlsConfig, err := generateTLSConfig()
+	tlsConfig, err := generateServerTLSConfig()
 	if err != nil {
 		fmt.Print(err)
 	}
