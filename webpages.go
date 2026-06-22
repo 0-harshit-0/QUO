@@ -91,7 +91,7 @@ func ReadWebpagesHistory() {
 	Logger.Info("Loading Webpages History File")
 
 	// Define a slice to hold the data
-	history, err := ReadJson[[]string](CacheDir + "/history.json")
+	history, err := ReadJson[[]string](Configs.CacheDir + "/history.json")
 	if err != nil {
 		Logger.Error("Error Loading Webpages History File", "error", err)
 		return
@@ -115,7 +115,7 @@ func ReadWebpagesHistory() {
 func UpdateHistory(name string) error {
 	Logger.Info("Updating webpages history")
 
-	path := CacheDir + "/history.json"
+	path := Configs.CacheDir + "/history.json"
 
 	history, err := ReadJson[[]string](path)
 	if err != nil {

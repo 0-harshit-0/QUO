@@ -12,6 +12,7 @@ type nodeJson struct {
 }
 
 // user can update the JSON manually. No need to restart the browser
+var nodesFileName = "/nodes.json"
 var AllNodes []nodeJson
 var nodesToSave []nodeJson
 
@@ -20,7 +21,7 @@ func LoadNodes() {
 
 	AllNodes = AllNodes[:0]
 
-	nodes, err := ReadJson[[]nodeJson](ConfigDir + "/nodes.json")
+	nodes, err := ReadJson[[]nodeJson](Configs.JsonConfigsDir + nodesFileName)
 	if err != nil {
 		Logger.Error("Error loading nodes", "error", err)
 		return
@@ -49,7 +50,7 @@ func UpdateNodes(ip string, port int) {
 
 func SaveNodes() {
 	Logger.Info("Saving nodes")
-	path := ConfigDir + "/nodes.json"
+	path := Configs.JsonConfigsDir + nodesFileName
 
 	// write back to file
 	out, err := json.MarshalIndent(nodesToSave, "", "  ")

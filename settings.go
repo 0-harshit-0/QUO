@@ -15,13 +15,14 @@ type settingsJson struct {
 }
 
 // user should not update the JSON directly. Even if they do, only refresh it on broser start
+var settingsFileName = "/settings.json"
 var Settings settingsJson
 
 func LoadSettings() {
 	Logger.Info("Loading Settings Config File")
 
 	var err error
-	Settings, err = ReadJson[settingsJson](ConfigDir + "/settings.json")
+	Settings, err = ReadJson[settingsJson](Configs.JsonConfigsDir + settingsFileName)
 	if err != nil {
 		Logger.Error("Cannot load settings file", "error", err)
 		return
@@ -71,5 +72,5 @@ func UpdateSetting(id int) error {
 	}
 
 	// Logger.Info("Saved the Updated Settings Config File")
-	return os.WriteFile(ConfigDir+"/settings.json", data, 0644)
+	return os.WriteFile(Configs.JsonConfigsDir+settingsFileName, data, 0644)
 }

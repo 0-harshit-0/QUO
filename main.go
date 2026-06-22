@@ -6,8 +6,6 @@ import (
 )
 
 var Shutdown = make(chan struct{})
-var ConfigDir string = "config"
-var CacheDir string = "cache"
 var ReceiverStarted bool = false
 
 func BrowserState() {
@@ -27,6 +25,8 @@ func QuitBrowser() {
 }
 
 func main() {
+	LoadConfigs()
+
 	_, file, err := NewLogger()
 	if err != nil {
 		panic(err)
